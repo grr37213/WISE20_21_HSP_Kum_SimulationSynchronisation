@@ -1,0 +1,119 @@
+\documentclass[11pt,twoside,a4paper]{article}
+
+\usepackage{a4wide,amsmath,amssymb}
+
+% Mann will direkt Umlaute eingeben können statt \"a, \"o, \"u usw.
+% Entweder:
+\usepackage[utf8]{inputenc}
+% oder:
+%\usepackage{umlaut}
+\usepackage[german]{babel}
+
+\usepackage[style=numeric]{biblatex}
+\addbibresource{grr.bib}
+
+\usepackage{textcomp}
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+\usepackage{hyperref}
+
+\usepackage{tikz}
+
+
+% Trennvorschl"age (in {} einfuegen, wenn nicht automatisch getrennt wird:
+% z.B. Authen-ti-ka-tions-sys-tem)
+%\hyphenation{}
+
+%\hyphenation{min-des-tens}
+%\hyphenation{Kol-li-sions-er-ken-nung}
+
+
+%-------------------------- Formatsachen --------------------------%
+
+% Bild-, Tabellenunterschriften veraendern:
+% Nummer fett, kleinerer Text fuer Bildunterschrift
+%\usepackage[bf,small]{caption}
+
+
+%\usepackage{mathpazo}  % -- Palatino als Zeichensatz -- einfach diese
+					   % Zeile auskommentieren, falls nicht installiert
+%\usepackage{mathptmx}  % -- Times als Zeichensatz
+
+% Zum Unterscheiden von Entwurfs- und endgueltiger Fassung
+%\usepackage{draftcopy}
+%\draftcopySetGrey{0.90}   %   90% = sehr helles Grau
+%\draftcopyName{ENTWURF}{155}   % statt ``DRAFT''
+%\draftcopySetScale{1}
+
+%--------------- Zeilen- und Absatzabstaende ----------------------%
+%\setlength{\parindent}{0em}
+%\setlength{\parskip}{\medskipamount}    % Abstand zwischen Abs"atzen
+
+
+\begin{document}
+
+\title{HSP-Projektarbeit im Master Informatik \\
+\small Kollisionsdetektion in in Echtzeit gerenderten 3D-Simulationen mit Fokus auf die Verwendung in Videospielen}
+\author{Robert Graf, Lukas Hermann\\
+%  (\texttt{fridolw@in.tum.de})\\[5mm]
+%  Seminar "`Internetrouting"' , \\
+  Ostbayerische Technische Hochschule Regensburg\\
+  \\
+  Projektbetreuung: Prof. Dr. Klaus Volbert
+}
+  
+\date{WS\, 2019/2020 (Version vom \today)}
+
+
+\maketitle
+
+\newpage
+\tableofcontents
+
+\input{abstract.tex}
+
+\section{Einleitung}
+\input{introduction.tex}
+
+\section{Kontext \& Terminologie}
+\input{terminology.tex}
+
+\section{Verwendungszwecke}
+\input{usages.tex}
+
+\section{Problemdefinition}
+\input{problem_definition.tex}
+
+
+\section{Zusammenfassung}
+\input{summary.tex}
+
+\newpage
+\printbibliography
+
+
+%\bibliographystyle{hieeetr}
+%\addcontentsline{toc}{chapter}{Bibliography}
+%\bibliography{grr.bib}
+%\begin{thebibliography}{12}
+%\bibitem[HaKT1 98]{HaKT1 98} \footnote{In die 
+%Bibliographie sollte s"amtliche benutzte Literatur 
+%rein, auch nicht beim eigenen Vortrag angegebene, aber benutzte Papiere 
+%und B\"ucher. Gleichzeitig sollte aber alles in der Literaturliste angegebene
+%mindestens einmal im Artikel zitiert werden, sonst nicht auflisten.}
+        %Michael Harkavy, J. D. Tygar, Hiroaki Kikuchi: {\sl Multi-round 
+        %Anonymous Auction Protocols}; 1st IEEE Workshop on Dependable and 
+        %Real-Time E-Commerce Systems, 1998.
+
+%\input{main_bibliography.tex}
+%\input{grr_bibliography.tex}
+%\input{hel_bibliography.tex}
+%\end{thebibliography}
+
+\end{document}
+
+
+
+
+
