@@ -1,0 +1,97 @@
+Die Fernsteuerung ist als Steuerung zu verstehen, d.h. keine Rückläufige Information aus der Simulation wird benötigt. Die von einem Sender gelieferte Information wird nur gelesen/konsumiert und entsprechend reagiert, es erfolgt aber keine Antwort. Die Fernsteuerung wird also als klassische Einwegkommunikation verstanden.\\
+
+Zum Zwecke der zukünftigen Umsetzung des Features der Fernsteuerung soll zunächst einmal der Status Quo in seinen hier relevanten Teilen Dargestellt werden. 
+
+\subsubsection{Abstraktionen}
+Dazu werden zunächst Terminologien für Abstraktionen erklärt. Nicht alle diese Abstraktionen sind auch exakt so im Code vorhanden, aber ihr Verwendungszweck ist prinzipiell umgesetzt. 
+
+
+
+\begin{enumerate}
+\item Simulation\\
+Die Simulation ist der Backend-Kern des Programms. Dieser Teil kümmert sich um die korrekte Umsetzung von Inhalten der Simulation und ihrer Ausführung. Die Abstraktion dient auch der Möglichkeit der Umsetzung verschiedener Objektive der Simulation.
+\item Operator\\
+Der Operator ist die Repräsentation eines (menschlichen) Bedieners und regelt somit bestimmte Ein- und Ausgabevektoren der Simulation.
+\item Operatorentität\\
+Eine spezielle Entität, welche als Avatar für den Operator in der simulierten Welt dient. Diese Spezialisierung ist essentiell im Bereich von Videospielen, um dem Spieler Zugang zur simulierten Welt zu geben. Die Operatorentität implementiert Reaktionen in Form von Aktionen der Entität auf bestimmte Eingabeparameter und ermöglicht den Erhalt einer Perspektive, v.A.~für Zwecke des Renderings.
+\item Ereignisverarbeitung\\
+Über Bibliotheken werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse(eng. \textit{events}) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
+\item 3D Renderer der Simulation\\
+Die graphische Ausgabe der Simulation ist prinzipiell keine Aufgabe der Simulation selbst, die theoretisch auch ohne Ausgabe korrekt arbeiten müsste. Ein Renderer greift lesend in viele Aspekte der Simulation ein, um die Informationen für seine Aufgabe zu erhalten.
+
+\item Applikationskopf\\
+Als zentrale Organisationsstruktur des Programms ist es die Aufgabe des Applikationskopfes, den Programmablauf zu Regeln. Das Programm besteht in seinem Kern aus einer Schleife, in der wiederholt andere genannte Subkomponenten ihre Verarbeitungsschritte durchführen. Der Applikationskopf dient dabei als Abstraktion für das Verhalten der Gesamtapplikation. So können verschiedene Verwendungszwecke, bzw. Arten der Gesamtapplikation (Standardprogramm, Fernbedienung, Simulation mit Fernbedienungsempfänger, etc.) realisiert werden. In der Zukunft prinzipiell Versionen mit Multi-Threading der verschiedenen Subvorgänge denkbar.
+\end{enumerate}
+
+
+\subsubsection{Status-Quo Design}
+Durch die Betrachtung der Abhängigkeiten und Positionen im Design kann ein neues Design veranschlagt werden, das kompatibel mit zukünftigen Änderungen ist, und aus der Diskrepanz zwischen den Designs ein Änderungsplan erstellt werden.\\
+%TODO Diagram 
+
+Die Abbildung \ref{fig:status_quo} zeigt eine Darstellung von in etwa dem Status Quo zu Beginn des Projektes mit Abstraktionen und Abhängigkeiten.
+In dieser Ansicht werden schnell einige Impraktikabilitäten, bzw. schlechte Designaspekte erkenntlich.
+Das Projekt ist durch viele individualistische Entwicklungsabschnitte mit variabler Seriosität in einem Zustand von nicht intelligentem Design. 
+In der Vergangenheit wurden oft kurze Implementationswege gewählt, um ein bestimmtes Feature umzusetzen. Einige dieser kurzen Wege müssen daher einem Design unterzogen werden, um die Features für dieses Projekt zur Änderung zu öffnen, möglichst ohne die nicht unbeachtliche Menge anderer funktionierender Features zu beeinträchtigen.\\
+Die isolierte Betrachtung einer bestimmten Abhängigkeit mag hochabstrakt teils als wenig sinnvoll erscheinen, jedoch sind bestimmte Abhängigkeiten auch nur wenig intuitiv. So ist z.B. die Abhängigkeit des Renderers zu der Systemressource des Fensters noch trivial zu erkennen, die Abhängigkeit der Simulation vom Fenster jedoch nicht. In diesem Beispiel ist die Rendering-Kamera eine Ressource, die einer Entität gehört, und somit implizit Eigentum der Simulation ist. Die Rendering-Kamera benötigt Informationen über die Größe der Rendering-Ziels in Pixel, um bestimmte Konfigurationen vorzunehmen. Diese Abhängigkeitskette wird nicht als trivial angesehen. Um solche Ketten zu sprengen, werden u.U.~weitere Abstraktionen benötigt, die dann keinen kurzen Implementierungsweg mehr darstellen, weswegen Sie nicht im Ursprünglichen Design enthalten sind.\\
+
+\subsubsection{Ermittlung des Neudesigns}
+Unter den beschriebenen Abstraktionen wird die Umsetzung der Fernsteuerung individualisiert strukturell in Abbildung \ref{fig:remotecontrol_indiv} gezeigt. 
+Zu sehen sind die relevanten Programminhalte relativ zu beiden kommunizierenden Maschinen.
+Der Empfänger führt dabei die Simulation aus. Der Operator wird dabei durch eine Netzwerkverbindung geteilt.
+Der Sender enthält dabei nur einen Teil des Operators, der für die Annahme von Eingaben zuständig ist, verarbeitet diese und sendet diese an den Empfänger.
+Der Empfänger hostet die Simulation und einen entsprechenden Operator, welcher für die Annahme von Netzwerkkommunikation implementiert ist.
+Zur Veranschaulichung der Belange der Teilprogramme Sender und Empfänger, bzw. Host und Server, werden die anderen genannten Abstraktionen im Diagramm \ref{fig:remotecontrol} eingeblendet.
+Sofort sind die Unterschiede zwischen diesem Vorschlag und dem Status-Quo sichtbar.
+Übergreifend lässt sich die Änderung als Extraktion der Operators aus der Simulation beschreiben. Die Schwierigkeit, bzw. der Umfang der Aufgabe, besteht darin, alte Abhängigkeiten von Komponenten umzumodellieren.\\
+
+\subsubsection{Optionen der Übermittlung}
+Verschiedene Fragestellungen über die Übertragungseigenschaften müssen beantwortet werden, um aus den verfügbaren Optionen zur Kommunikation auszuwählen.\\
+
+
+
+
+
+\begin{enumerate}
+\item Welche Echtzeitanforderungen bestehen?
+\item Was wird übertragen?
+\item Welche Übertragungsrobustheit ist für ein bestimmtes Datum gefordert?
+\item Protokolle TCP oder UDP?
+\end{enumerate}
+
+
+
+Für jedes zu übertragende Datum wird versucht, die Information in einem robusten Statusformat darzustellen.
+
+
+
+
+
+
+Prinzipiell ist die ungefilterte Übertragung von Eingabeereignissen möglich und am einfachsten Umzusetzen. Daraus entstehen allerdings einige Nachteile:
+\begin{enumerate}
+\item Übermittlung für den Empfänger irrelevanter Information, z.B. das Drücken einer ungebundenen Taste am Sender.
+\item Bündelung in Pakete durch Protokolle führt zur Bündelung redundanter Information und relativem Auftrittszeitverlust zwischen Ereignissen.
+\item Oft viele gleichartige Ereignisse hintereinander. Frequenz von Ereignissen ist Abhängig durch Abtastraten der Verwendeten Bibliothek, Treibersoftware und Hardware der Eingabegeräte. Sogar schon im Status-Quo zu Beginn des Projektes werden Ereignisse, die keine Änderung darstellen, bereits gefiltert. Trotzdem werden z.B. beim Bewegen der Maus zehnfach Ereignisse erzeugt, welche die Mausposition minimal Aktualisieren.
+\end{enumerate}
+Es erscheint daher profitabler, Ereignisinformation in einer abstrakten Darstellung der Intention eines Bedieners zu akkumulieren und diese Darstellung dann zyklisch zu übertragen.\\
+Jedes kommunizierte Informationspaket stellt eine Aktualisierung des auf dem Empfänger bekannten Status dar.
+Um eine Bedienung annähernd in ihren qualitativen Eigenschaften zu einer Lokalen ohne Netzwerkverbindung herzustellen muss mehrfach pro Sekunde übertragen werden. Wie oft muss ein entsprechender Test zeigen. Die Schätzung an dieser Stelle liegt bei ca. 20 mal pro Sekunde.
+Über Netzwerkverbindungen existieren Informationsverluste, z.B. durch Paketverlust. Das Netzwerkprotokoll TCP mitigiert Paketverlust typischerweise völlig, ist dadurch aber nicht mehr Echtzeitfähig. TCP-Kommunikation blockt bei Paketverlust, bis das verlorene Paket nachgesendet worden ist. 
+Ein Beispiel der unvorteilhaften Verwendung von TCP im Bereich der Videospiele ist das äußerst erfolgreiche und bekannte Spiel Minecraft von Mojang. Hier äußern sich Netzwerkverzögerungen (Lags) durch einen Stillstand der Spielabläufe, der sich über Sekunden ziehen kann und anschließendes Aufholen der Simulationszeit im Zeitraffer. Manch ein unverdientes Game Over kann daher von einem Gegner verursacht werden, der in der Zeit des Stillstandes Angriffe auf den Spieler im TCP-Puffer ansammelt, auf die der Spieler nicht reagieren kann.\\
+Es soll also wo möglich zyklisch UDP verwendet werden. Bei der Verwendung von UDP muss allerdings Übertragungsrobustheit selbst hergestellt werden. Klassisch wird dafür oft Redundanz als stochastischer Lösungsansatz vorgeschlagen/gelehrt.
+Weiter steht UDP TCP in puncto Empfangsbestätigung nach.\\
+Beim zyklischen Versand kann redundantes Senden von Information und Bidirektionale Kommunikation wegen Rücksendungen von Empfangsbestätigungen jedoch vermieden werden, wenn übertragene Informationen als absoluter Status modelliert werden, nicht als Aktualisierung. Wir senden keine Signale, sondern ein absolutes Datum. Beispiel: 
+$x = 16$ Wir senden nicht \glqq Addiere $+32$ auf Variable $x$\grqq , sondern \glqq Variable $x = 48$\grqq .\\
+Dieser simple Trick kann auch auf zu konsumierende Signale angewendet werden, indem anstatt ein Signalbit ein Zählerstand übertragen wird, der die Anzahl der übertragenen Signale zählt. Ein Empfänger kann so bei Paketverlust trotzdem die verlorene Information aus dem nächsten Zählerstand mit ablesen.
+%TODO graphic
+Eine besonders nützliche Eigenschaft der zyklischen Übertragung kann in diesem die Assoziativität der Aktualisierung sein. Wir definieren die Aktualisierungsoperation $\oplus : STATUS \times STATUS \mapsto STATUS$. Wir gehen davon aus, das ein Zeitstempel (Zeit definiert am Sender) der Erzeugung des Status in diesem enthalten ist $timestamp: STATUS \mapsto T_r$.
+$$ status, aktualisierung \in STATUS : status \oplus aktualisierung = s' $$
+$$
+s' =
+\begin{cases}
+	aktualisierung,& \text{wenn } timestamp(aktualisierung) > timestamp(status)\\
+    status,              & \text{sonst}
+\end{cases}
+ $$
+ Dadurch gilt Assoziativität von $\oplus$ : $ s_1 \oplus (s_0 \oplus s_2) = (s_1 \oplus s_0) \oplus s_2 $
+ Wenn $timestamp(s_0) < timestamp(s_1) < timestamp(s_2)$, dann ist nach dem Erhalt von $s_2 s_1$ irrelevant. Durch die zuvor beschriebenen Eigenschaften 
