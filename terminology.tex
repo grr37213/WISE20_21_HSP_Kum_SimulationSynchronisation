@@ -1,5 +1,5 @@
 
-
+\label{sec:terminology}
 Implementierungstechnisch schränkt eine Rechenmaschine die mathematischen Zahlenräume ein:
 \begin{itemize}
 \item Die Reelen Zahlen $\mathbb{R}$ beschränken sich auf Floating-Point-Datentypen, welche hier im weiteren mit $\mathcal{F} \subset \mathbb{R}$ bezeichnet werden
@@ -73,7 +73,7 @@ Auf diese Weise gelingt es selbst extreme absolute Entfernungen und Geschwindigk
 
 \subsection{Entitäten}
 \label{sec:entity}
-Entitäten sind der atomare Inhalt der Simulation. Es handelt sich dabei um eine Abstraktion für \glqq Etwas\grqq  in der Simulation. In der Realität suchen Physiker immer weiter \glqq Das [sie] erkenne[n], was die Welt im Innersten zusammenhält, ..\grqq [- J.W.v. Goethe, Faust, \glqq Nacht\grqq, Vers. 832]. Was in der Realität eine offene Frage ist, obwohl seit den Zeiten von Goethe in der Quantenphysik durchaus Fortschritte gemacht worden sind, muss für die Simulation jedoch eindeutig beantwortet werden, um eine quantifizierbare Menge an Instanzen eines Konzepts zu haben, die dann Simuliert werden können.\\
+Entitäten sind der atomare Inhalt der Simulation. Es handelt sich dabei um eine Abstraktion für \glqq Etwas\grqq  in der Simulation. In der Realität suchen Physiker immer weiter \glqq Das [sie] erkenne[n], was die Welt im Innersten zusammenhält, ..\grqq [- J.W.v. Goethe, Faust, \glqq Nacht\grqq, Vers. 382]. Was in der Realität eine offene Frage ist, obwohl seit den Zeiten von Goethe in der Quantenphysik durchaus Fortschritte gemacht worden sind, muss für die Simulation jedoch eindeutig beantwortet werden, um eine quantifizierbare Menge an Instanzen eines Konzepts zu haben, die dann Simuliert werden können.\\
 Quantenmechanische Prozesse sind, um die Illusion einer realen Welt aus der Perspektive eines Menschen herzustellen, um einiges zu rechenaufwändig für unsere Anforderungen. Man setzt die Abstraktion der atomaren Simulationseinheit also höher an, was praktisch zu vielen Spezialisierungen führt. Die gemeinsame Basis dieser Spezialisierungen wird hier \textit{Entity}( dt. Entität ) genannt.\\
 
 Verschiedenartige Beispiele:
@@ -95,6 +95,9 @@ Als initiale Bedingung für das Auftreten einer Interaktion werden in dieser Sim
 \subsection{Aktionen}
 Aktionen werden von Entitäten durchgeführt und stellen eine unvorhersehbare Änderung einer Entität dar. Aktionen sind pro Entitätstyp definiert. Der Auslöser für eine Aktion ist dabei außerhalb der Definition der Entität zu suchen. Derzeit passt nur der menschliche Bediener auf diese Beschreibung, allerdings sind theoretisch auch andere Einflüsse, zum Beispiel durch eine Form von künstlicher Intelligenz denkbar, die nicht direkt als Teil der Entität modelliert wurde.
 
+
+\subsection{Projektanteile/Neuleistungen}
+Die im Abschnitt \ref{sec:terminology} behandelten Konzepte sind im Status-Quo zu Beginn des Projektes umgesetzt. Ihre Behandlung in diesem Bericht dient im Folgenden als Kontext.
 
 
 

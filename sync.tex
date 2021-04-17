@@ -1,0 +1,22 @@
+\section{Volle Synchronisation einer Simulation}
+Das Ziel ist, auf zwei Maschinen/Prozessen jeweils eine Simulation zu haben, welche miteinander in Echtzeit synchronisiert werden.\\
+Zu diesem Zweck wird eine Synchronisation zunächst mit einer Master-Slave-Strategie umgesetzt. Eine Maschine dient dabei als Server, eine als Client.
+Der Server hat die Aufgabe, den Status der Simulation auf eine neue Simulationszeit fortschreiten zu lassen. Ein solcher Simulationsschritt wird Tick genannt (vgl. im Anhang den Abschnitt \ref{sec:tick}). Da die Simulation auf dem Server vollständig ist, kann auch ein lokaler Benutzer sich zur Serversimulation verbinden.\\
+Der Client hat die Aufgabe, vom Server gesendete Aktualisierungen für Simulationsinhalte anzunehmen und zu verarbeiten. Der Client hat unter Umständen nur die für ihn relevanten Simulationsinhalte lokal vorhanden. Der Client führt keine Ticks, d.h.~keine Simulation selbstständig durch. Der Client hat die Möglichkeit in Verbindung mit einem eigenen lokalen Benutzer eine graphische Ausgabe anhand der ihm bekannten Simulationsinhalte zu generieren. 
+
+\subsection{Zeitsynchronisation}
+Die graphische Ausgabe ist so gestaltet, dass anzuzeigende Informationsinhalte zur Anzeige zu einem bestimmten Simulationszeitpunkt inter- oder extrapoliert werden.
+Es wird sich erhofft durch dieses Feature die Illusion von Gleichzeitigkeit zu erzeugen, in dem die graphische Ausgabe des Clients entsprechend der Durchschnittslatenz zum Server in der Zukunft gerendert wird. Auf dem Client durchgeführte Aktionen eines Benutzers können dadurch beim Eintreffen auf dem Server als gegenwärtig interpretiert werden.\\
+Natürlich besteht dabei der Nachteil, dass ein Client u.U.~durch seine Vorhersage momentan falsche Szenen anzeigt. Das wird an dieser Stelle als der benötigte Trade-Off angesehen, um das atomare Problem der Latenz zu lösen.
+
+Um die Zeit auf dem Client einzustellen, wird die in der Simulation enthaltene Uhr, welche die Simulationszeit steuert, synchronisiert.
+
+%TODO sync protocol of clocks here
+
+\subsection{Server-Client Netzwerk}
+Für die volle Synchronisation sollen die Vorteile beider Netzwerkprotokolle TCP und UDP ausgenutzt werden. Der Server hält zu allen Clients je eine offene TCP-Verbindung. Das ist zudem praktisch, da die Verbindungsorientierung von TCP sich so auf die Verbindung zwischen Server und Client für unsere Zwecke überträgt: Bricht die Verbindung ab, so kann dies über Fehlerzustände oder die geschlossene Verbindung am TCP-Socket festgestellt werden.
+Es wird ein Initiierungsprotokoll für eine Verbindung über TCP abgehandelt, welche Informationen zu Server, bzw. Client initial austauscht. Darin enthalten sind entsprechende UDP-Ports von Server und Client, welche im folgenden für UDP-Kommunikation verwendet werden können.\\
+
+\subsection{Client-Eingaben}
+Dem Client ist es unter der veranschlagen Master-Slave-Architektur nicht erlaubt, irgendwelche Simulationsinhalte zu schreiben. Ein Benutzer soll also nicht einmal seine eigene Figur (Userentität) selbst bewegen.\\
+Es scheint praktisch, die in der Fernsteuerung umgesetzten Eingabemethoden wiederzuverwenden. Die Methode ist bereits Bandbreiten optimiert, die zu übertragene Information ist bereits auf essentielle Use-Cases reduziert. Die Semantik eines Statussets als Bedienerintention scheint richtig: Der Client hat als Slave keine kontrollierenden Rechte gegenüber Inhalte der Simulation und kann über das Statusset nur Vorschläge liefern, welche die Simulation auf dem Server zu ihrer Diskretion einbeziehen kann.
