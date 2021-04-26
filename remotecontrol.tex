@@ -1,65 +1,48 @@
-\section{Aufarbeitung des Status Quo}
-Die Fernsteuerung ist als Steuerung zu verstehen, d.h. keine Rückläufige Information aus der Simulation wird benötigt. Die von einem Sender gelieferte Information wird nur gelesen/konsumiert und entsprechend reagiert, es erfolgt aber keine Antwort. Die Fernsteuerung wird also als klassische Einwegkommunikation verstanden.\\
+\section{Umsetzung der Fernsteuerung}
 
-Zum Zwecke der zukünftigen Umsetzung des Features der Fernsteuerung soll zunächst einmal der Status Quo in seinen hier relevanten Teilen Dargestellt werden. 
+Die Fernsteuerung soll ausschließlich die Steuerung einer Spielfigur auf einem Remote ermöglichen. Ausgeschlossen sind dadurch die grafische Ausgabe an der Steuerungsapplikation und generell eine Rücksendung von Information vom Remote zur Steuerung.\\
 
-\subsection{Beschreibung des Status-Quo}
-Durch die Betrachtung der Abhängigkeiten und Positionen im bestehenden Design kann ein neues Design veranschlagt werden, das kompatibel mit zukünftigen Änderungen ist, und aus der Diskrepanz zwischen den Designs ein Änderungsplan erstellt werden.\\
+\subsection{Formatierung von Benutzereingaben}
+Zum Zweck der Fernsteuerung werden Benutzereingaben in ein übertragbares Format gebracht.\\
+Es wurde sich nach Abschnitt \ref{sec:transmission_formats} hier auf Grund der Echtzeitrelevanz auf Statusinformation via UDP geeinigt.\\
+Es wurde zunächst in Betracht gezogen direkt Eingabeereignisse zu versenden. Eingabeereignisse sind
+kleine Einheiten von Information, welche den Zustand oder die Änderung von Eingabegeräten angeben.\\
+Allerdings entstehen hier einige Probleme:
+\begin{itemize}
+\item Eingabeereignisse bilden teilweise Stati und teilweise Änderungsinformation ab. Beispielsweise führt die Zustandsänderung einer Taste zu einem Ereignis, was eine Änderungsinformation darstellt, welche einen Status beinhält. Als ein anderes Beispiel existieren Ereignisse, welche die Differenz des Stands des Mausrades angeben, da dort keine absolute Skala verwendet wird. Die Probleme, welche aus diesen unterschiedlichen Formaten oder stattdessen der Verwendung von TCP entstehen wurden bereits in Abschnitt \ref{sec:transmission_formats} genauer beschrieben. Die Verwendung von rohen Eingabeereignissen erforderte also eine Umwandlung zu Statusinformation.
+\item Eingabeereignisse sind teilweise clientseitig kontextbezogen. Vor allem die Verwendung von Ereignissen, welche von der Maus erzeugt werden, müssen oft unter Einbezug der Mausposition realisiert werden, welche relativ zur verwendeten Auflösung sowohl des verwendeten Monitors, als auch der Größe des Applikationsfensters abhängen. Beides sind Größen, auf welche die Applikation keinen authoritären Eingiff hat oder haben soll. Dazu kommen ebenfalls Probleme mit der Umsetzung verschiedener Maus-Modi, bei denen die Maus wahlweise als Zeigegerät oder als analoge Eingabemethode verwendet werden soll.
+\item Viele Eingabeereignisse stellen keine Information dar, welche den Remote, bzw. den Server tangieren. Größenveränderung des Client-Fensters, die Verwendung einer unbenutzten Taste, diese Dinge können als Information-Leakage interpretiert werden. Effektiv ist die Applikation unter diesen Umständen ein Keylogger.
+\item Eingabeereignisse werden vielfach erzeugt und ändern oft nur marginal des Stand der Dinge. Es wird als verschwenderisch Angesehen eine Vielzahl gleichartiger Ereignisse unter Belastung der Verfügbaren Bandbreite zu versenden, wenn die meisten enthaltenen Ereignisse nur zu einer Überschreibung am Remote führen und effektiv keinen Effekt haben.
+\item Um die verfügbare Bandbreite auszunutzen müssten Ereignisse gesammelt und in Gruppen versandt werden. Dadurch geht die Information über zeitliche Abstände zwischen Ereignissen weitestgehend verloren. Das Hinzufügen von Zeitstempeln zu Ereignissen wird als unnötiger Overhead sowohl für die Applikationen als auch die Übertragung angesehen.
+\end{itemize}
 
-Dazu werden hier zunächst Terminologien für Abstraktionen erklärt. Zugunsten des Lesers wird hier kein exaktes Abbild des Status-Quo geliefert, sondern eins, welches vereinfacht den groben Umriss und Problematiken sichtbar macht.
-
-
-
-\begin{figure}
-
-\centering
-\resizebox{.9\linewidth}{!}{
-\begin{tikzpicture}[thick,scale=1, every node/.style={scale=1}]
-\begin{package}{Applikation}
-\begin{class}{Applikationskopf}{0,0}
-\end{class}
-\begin{class}{Renderer}{9,-1}
-\end{class}
-\begin{class}{Simulation}{9,-2}
-\inherit{Renderer}
-\end{class}
-\begin{class}{Ereignisverarbeitung}{3,-2}
-\end{class}
-\begin{class}{OS/Window}{-3,-1}
-\end{class}
-\begin{class}{Entity}{9, -4}
-\end{class}
-\begin{class}{Userentity}{3,-4}
-\inherit{Entity}
-\end{class}
+Eingabeereignisse werden daher clientseitig in einen Kontrollstatus konsolidiert, eine Menge an Statusinformation, welche als Eingabeformat für die Remote-Simulation gilt, und zyklisch versendet werden kann. Die Größe dieser Menge ist vergleichsweise klein (derzeitig 64 Bytes).\\
+Der Status umfasst ebenfalls nur Stati, welche für die Simulation von Interesse sind und bildet so die Bedienerintention gegenüber der Simulation, bzw. seiner Spielerfigur ab.\\
+Einige Eingaben die ein Bediener tätigen kann, beziehen sich nicht auf Simulationsinhalte per se, sonders beispielsweise auf die Anpassung der Perspektive (erste und dritte Person) oder der Anzeige bestimmter Metriken der Simulation, z.B.~ Frames per Second, etc.. Diese können unabhängig vom Kontrollstatus clientseitig durch die Ereignisverarbeitung verarbeitet werden.\\
 
 
-\aggregation{Applikationskopf}{1}{}{Simulation}
-\composition{Applikationskopf}{1}{}{OS/Window}
-\composition{Applikationskopf}{1}{}{Ereignisverarbeitung}
-\association{Ereignisverarbeitung}{1}{}{Userentity}{1}{}
-\association{Simulation}{1}{}{Userentity}{1}{}
-\association{OS/Window}{1}{}{Ereignisverarbeitung}{1}{}
-\aggregation{Simulation}{1..*}{}{Entity}
-\association{Renderer}{1}{}{OS/Window}{1}{}
+Bei der Fernsteuerung ist zunächst die Rücksendung von Information vom Remote nicht erwünscht. Durch den Kontrollstatus als konsolidiertes Eingabeformat kann die unidirektionalität der Eingabe leichter versichert werden.
+Die Umsetzung einiger Features als unidirektionaler Status gestaltet sich jedoch nicht als trivial:
+Zunächst waren zuvor einige Features ohne diese Anforderungen realisiert und erforderten einen Umbau, um einen unidirektionalen Status interpretieren zu können.
+Außerdem sind einige Features strukturell unter den Anforderungen schwierig umzusetzen, bzw.~leiden sogar unter den Anforderungen:
+\begin{itemize}
+\item Die Betätigung eines Auslösers, z.B.~zum Schießen in der Shooter-Applikation ist starken Echtzeitanforderungen unterlegen. Bei längeren Latenzzeiten kann z.B. das klicken der Maus mehrfach geschehen. Wie oft und wie lange wurde der Schalter nun betätigt? Bei den möglicherweise anliegenden Latenzen ist eine dynamische Abtastrate durch einen nicht-dynamischen Status nicht abbildbar. Weiter ist die Abtastrate des Eingabegeräts ebenfalls beschränkt, wir schätzen diese allerdings als so hoch ein, dass dies irrelevant für unsere Überlegungen ist. An dieser Stelle sind unter den gegebenen Umständen die Fähigkeiten der Applikation beschränkt.
+\item Die Selektion aus einer Menge von selektierbaren Dingen.\\
+Ist die Menge der selektierbare Dinge bekannt und statisch, kann die Selektion durch einen einfachen Integer-Status dargestellt werden. Ist die Menge auszuwählender Elemente jedoch dynamisch, werden ohne die Möglichkeit der Rückkommunikation dieser Anzahl jedoch schwierig.
+%% TODO Lukas erklär dein bums
+\end{itemize}
 
-\end{package}
-\end{tikzpicture}
-}
-\caption{UML-Perspektive auf den Status-Quo zu Beginn des Projekts}
-\label{fig:status_quo}
-\end{figure}
+Einige Konzepte lassen sich jedoch vergleichbar leicht umsetzen.
+\begin{itemize}
+\item Absolute Position der Benutzerfigur
+\item Absolute Ausrichtung der Benutzerfigur
+\item Bewegungsintention des Bedieners
+\item etc.
+\end{itemize}
 
-Die Abbildung \ref{fig:status_quo} zeigt eine Darstellung von in etwa dem Status Quo zu Beginn des Projektes mit Abstraktionen und Abhängigkeiten.
-In dieser Ansicht werden schnell einige Impraktikabilitäten, bzw. schlechte Designaspekte erkenntlich.
-Das Projekt ist durch viele individualistische Entwicklungsabschnitte mit variabler Seriosität in der Bearbeitung in einem Zustand von nicht intelligentem Design. 
-In der Vergangenheit wurden oft kurze Implementationswege gewählt, um ein bestimmtes Feature umzusetzen ohne auf Erweiterbarkeit zu achten. Bestimmte Anforderungen, vor allem im Bereich Synchronisation und Netzwerk waren zu dieser Zeit auch nicht bekannt.
-Eine im Kontext der Synchronisation oder der Fernsteuerung vorteilhafte Trennung von Komponenten (Separation of Concerns) ist daher nicht vorhanden, d.h. es sind detaillierte Umbauten im Design nötig, um die neuen Anforderungen hinsichtlich Synchronisation umzusetzen.
-
-\subsection{Ermittlung eines generellen Designs mit Rücksicht auf die Umsetzung der Fernsteuerung}
+\subsection{Umsetzung im Design}
 
 \begin{figure}
-
 \centering
 \begin{subfigure}[b]{0.3\textwidth}
 \centering
@@ -108,120 +91,7 @@ Eine im Kontext der Synchronisation oder der Fernsteuerung vorteilhafte Trennung
 \label{fig:remotecontrol_design}
 \end{figure}
 
-Es wird an dieser Stelle ein Zieldesign postuliert, welches von den Abbildungen Abbildung \ref{fig:remotecontrol_design} gezeigt wird. Es wird eine Abstraktion eines Benutzers erstellt, welche alle \textit{Concerns} eines Benutzers beinhalten soll. Eine solche Abstraktion war bis dato nicht nötig, da weder zwischen mehreren Benutzern noch verschiedenen Arten von Benutzern unterschieden werden musste, da nur ein lokaler hart codierter Benutzer implementiert war.
-Der Benutzer soll dabei als gleichwertige Komponente neben der Simulation existieren können, d.h. auch ohne eine Simulation existieren können. Sämtliche nötigen Verbindungen zwischen diesen müssen über Schnittstellen hergestellt werden.
-Durch verschiedene Implementierungen dieses Benutzers sollen dann sowohl der standardmäßige lokale Benutzer, als auch ein ferngesteuerte Benutzer realisiert werden.
-
-\begin{figure}
-
-\centering
-\resizebox{.9\linewidth}{!}{
-\begin{tikzpicture}[thick,scale=1, every node/.style={scale=1}]
-\begin{package}{Applikation}
-\begin{class}{Applikationskopf}{0,0}
-\end{class}
-\begin{class}{Renderer}{3, -3}
-\end{class}
-\begin{class}{Simulation}{4,-1}
-\inherit{Renderer}
-\end{class}
-\begin{class}{Ereignisverarbeitung}{-9,-2}
-\end{class}
-\begin{class}{OS/Window}{-9,-3}
-\end{class}
-\begin{class}{Entity}{9, -2}
-\end{class}
-\begin{class}{User}{-4,-1}
-\end{class}
-\begin{class}{Userentity}{9,-3}
-\inherit{Entity}
-\end{class}
-
-
-\aggregation{Applikationskopf}{1}{}{Simulation}
-\aggregation{Applikationskopf}{1}{}{User}
-\composition{User}{1}{}{Ereignisverarbeitung}{1}{}
-\composition{Simulation}{1}{}{Userentity}{1}{}
-\composition{User}{1}{}{OS/Window}{1}{}
-\aggregation{Simulation}{1..*}{}{Entity}
-\association{Simulation}{1}{}{User}{}{1}
-\association{Renderer}{1}{}{OS/Window}{1}{}
-
-\end{package}
-\end{tikzpicture}
-}
-\caption{UML-Diagramm zur Veranschaulichung der vollzogenen \textit{Separation of Concern}s im Kontext der Fernsteuerung}
-\label{fig:remotecontrol_separation}
-\end{figure}
-
-Abbildung \ref{fig:remotecontrol_separation} zeigt die letztendliche Neuaufteilung von Komponenten unter dem vorgeschlagenen Design. Aus den Unterschieden zu \ref{fig:status_quo} können bereits einige Probleme, bzw. zu vollziehenden Arbeiten ermittelt werden:
-\begin{itemize}
-	\item Assoziation zwischen Ereignisverarbeitung und Userentität\\
-	Im Status-Quo werden Ereignisse vom Benutzeravatar noch direkt angewendet. Dieser Informationsfluss muss nun über eine saubere Schnittstelle abgebildet werden.\\
-	Zudem steht hier im Status-Quo eine bidirektionale Assoziation, welche konträr zur veranschlagten unidirektionalen Kommunikation der Fernsteuerung ist.
-	\item Viele spezielle Formen von Entitäten missachten den unidirektionalen Informationsfluss.\\
-	So fragt beispielsweise die Entität einer Waffe im Status-Quo die Ereignisverarbeitung auf direktem weg, ob denn die Taste zum schießen gedrückt sei.
-	\item Der Applikationskopf muss für fehlende, bzw. nicht initialisierte Komponenten User und Simulation ein entsprechendes stabiles Verhalten erhalten.
-	\item Ein Überbleibsel, welches die Schnittstelle zwischen User und Simulation verletzt, ist der Renderer. Hier gilt immer noch eine hart codierte 1:1 Beziehung, welche den Renderer mit seinem Render-Ziel, dem Fenster, verbindet und die implizit ein anderes Beziehungsverhältnis zwischen User und Simulation verhindert. Für die Umsetzung der Fernsteuerung ist dieser Umstand allerdings gerade noch akzeptabel. Da mehrere Benutzer an einer Simulation keine Anforderung der Fernsteuerung ist.
-\end{itemize}
-
-\section{Umsetzung der Fernsteuerung}
-Die Fernsteuerung soll Eingaben eines Benutzers an die Simulation übermitteln. Eine Antwort ist explizit nicht gefordert.
-
-\subsection{Übertragungsformat}
-
-Zunächst bestehen Benutzereingaben aus Eingabeereignissen, welche von einer Bibliothek in Verbindung mit einem Fenster des Betriebssystems zyklisch angefordert werden können.\\
-Prinzipiell ist die ungefilterte Übertragung dieser Eingabeereignisse möglich und am einfachsten Umzusetzen. Daraus entstehen allerdings einige Nachteile:
-\begin{enumerate}
-\item Übermittlung für den Empfänger irrelevanter Information, z.B. das Drücken einer ungebundenen Taste am Sender.
-\item Bündelung in Pakete durch Protokolle führt zur Bündelung redundanter Information und Verlust der relativen Auftrittszeit zwischen Ereignissen, da diese standardmäßig keinen Zeitstempel mitführen.
-\item Oft stehen viele gleichartige Ereignisse hintereinander. Die Frequenz von Ereignissen ist Abhängig von Abtastraten der Verwendeten Bibliothek, Treibersoftware und Hardware der Eingabegeräte. Sogar schon im Status-Quo zu Beginn des Projektes werden Ereignisse, die keine Änderung darstellen, bereits gefiltert. Trotzdem werden z.B. beim Bewegen der Maus zehnfach Ereignisse erzeugt, welche die Mausposition nur minimal aktualisieren. Solch eine Menge an Ereignissen könnten die verfügbare Bandbreite ungebührlich belasten.
-\end{enumerate}
-Es erscheint daher profitabler, Ereignisinformation in der abstrakteren Darstellung der Intention eines Bedieners zu akkumulieren und diese Darstellung dann in konsolidierter Form zyklisch zu übertragen.\\
-Um eine Bedienung über Netzwerk annähernd in ihren qualitativen Eigenschaften zu einer lokalen Bedienung ohne Netzwerkverbindung herzustellen muss mehrfach pro Sekunde übertragen werden. Wie oft muss ein entsprechender Test zeigen. Die Schätzung an dieser Stelle liegt bei ca.~20Hz.\\
-
-\subsection{Netzwerkprotokoll}
-Über Netzwerkverbindungen existieren Informationsverluste, z.B. durch Paketverlust. Das Netzwerkprotokoll TCP verhindert Paketverlust typischerweise völlig, ist dadurch aber nicht mehr Echtzeitfähig. TCP-Kommunikation blockt bei Paketverlust, bis das verlorene Paket nachgesendet worden ist, was zu nicht vorhersehbaren Verzögerungen in der Übertragung führen kann.
-
-
-
-Die andere Option neben TCP ist UDP. Bei UDP können allerdings Pakete jederzeit komplett verloren gehen.
-Klassisch wird zur Abschwächung dieses Problems oft Redundanz als stochastischer Lösungsansatz vorgeschlagen/gelehrt.
-Weiter steht UDP TCP in puncto Empfangsbestätigung nach. Für die hier veranschlagte unidirektionale Kommunikation der Fernsteuerung ist die Rücksendung einer Empfangsbestätigung allerdings eh nicht gefordert.\\
-
-Beim zyklischen Versand kann explizite Redundanz, d.h.~das mehrfache Senden einer Nachricht) in eine implizite Variante umgewandelt werden, wenn in jedem Zyklus ein Gesamtstatus übertragen wird.
-Dieser Ansatz ist für kleine Gesamtgrößen eines Gesamtstatus noch tragbar.
-Es werden in einem Paket also absolute Daten versendet anstatt eine relative Änderung. Das Prinzip gleicht dabei dem eines anliegenden Pegels. Beispiel:
-$x = 16$ Wir senden nicht \glqq Addiere $+32$ auf Variable $x$\grqq , sondern \glqq Variable $x = 48$\grqq .\\
-Diese Art vorzugehen kann auch auf zu konsumierende Signale angewendet werden, indem anstatt ein Signalbit ein Zählerstand übertragen wird, der die Anzahl der übertragenen Signale zählt. Ein Empfänger kann so bei Paketverlust trotzdem die verlorene Information aus der Differenz zum vorigen Zählerstand direkt beim nächsten Übertragungszyklus ablesen.
-%TODO graphic
-Der Status einer abstrakten, konsolidierten Bedienerintention wird also in einem absolutem, zyklisch übertragenen Status dargestellt. Wir bezeichnen diesen als Statusset.\\
-Wir senden zudem zu jedem Statusset einen Zeitstempel (Senderzeit) mit, um nicht aktuelle empfangene Sets zu verwerfen.
-
-\subsection{Statusset}
-Das Statusset beschreibt die Intention eines Bedieners als absoluten Status.
-Beispiele für Inhalte des Statussets sind:
-\begin{enumerate}
-\item Absolute Rotation (Ausrichtung, nicht Winkelbeschleunigung) der Userentität als 3D-Vektor.
-\item Waffenselektion als Index (Integer)
-\item Neustartsignal der Simulation als Signal ( Signalzähler, Integer )
-\end{enumerate}
-
-Einige Features können unter der Verwendung eines solchen absoluten Status jedoch nur schwer umgesetzt werden:\\
-In einem Shooter-Videospiel muss geschossen werden können. Mit den nun bekannten Einschränkungen entstehen dafür jedoch einige Probleme:
-\begin{enumerate}
-\item Zwischen Sendevorgängen kann ein Auslöser potentiell mehrmals betätigt werden.
-\item Die zeitliche Abstimmung dieser Eingabe ist relevant mit strengen Echtzeitbedingungen, denn zum Beispielswese kann 200ms nach dem Betätigen der entsprechen Taste zum Schießen das Ziel bereits getroffen sein müssen.
-\item Das Verhalten einer Waffe beim Drücken des Auslösers variiert je nach Waffe, ist also in der Entität auf dem Empfänger definiert. Es ist also nicht möglich, lokal auf dem Sender, der keine Information über die konkrete Waffe besitzt, abstraktere Information zu ermitteln und das Feature so umzusetzen.
-\end{enumerate}
-Man könnte theoretisch Zeitintervalle übertragen, um die Auslösezeiten auf dem Empfänger rückwirkend herzustellen aber ohne eine Synchronisation, d.h. bidirektionale Kommunikation, der Zeiten zwischen Sender und Empfänger kann das erwünschte Verhalten nicht exakt rekonstruiert werden. Zudem ist rückwirkender Einfluss auf physikalische Zustände in einer Simulation schwierig Umzusetzen, wenn echtzeitrelevante Information zu spät eintrifft.
-Um den Fall der mehrfachen Betätigung abzudecken, müsste eine ganze Menge solcher Intervalle übertragen werden. Selbst wenn vollständig rekonstruierbare Übertragung möglich wäre, sind die Anforderungen auf die Reaktionszeiten dieses Features so streng, dass nur leichte Verzögerungen/Latenzzeiten (ca. 10ms) schon einen Bruch dieser Anforderungen bedeuten.\\
-Diese Konzepte sind im Rahmen der Fernsteuerung nicht zufriedenstellend verlustfrei und es müssen Abstriche gemacht werden. Das Feature wird zunächst durch einen übertragenen Boolean dargestellt, der trivial den Zustand des Auslösers darstellt, und die bei hohen Latenzzeiten negativen Eigenschaften dieser Entscheidung werden in Kauf genommen.\\
-Dies geschieht vor allem spekulierend auf die später im Projekt einzufügende Echtzeitsynchronisation, unter deren Umständen dieses Feature besser umgesetzt werden kann.\\
-Eine hier unwesentlich bessere Umsetzung selbst unter hier aktuellen Umständen ist denkbar, soll an dieser Stelle jedoch ignoriert werden.
-
-\subsection{Realisierung der Fernsteuerung im Design}
-Der User erhält ein Statusset, welches durch die Ereignisverarbeitung beschrieben werden kann.
-Um auf dessen Basis ein Verhalten für Simulationsinhalte, z.B.~ der Userentity, umzusetzten, wird eine Referenz auf das Set der Simulation mitgeteilt. Zu diesem Zweck muss ein User sich nun bei der Simulation anmelden. Im Zuge dieses Features wurde die Simulation auf die Möglichkeit mehrerer verbundener Benutzer erweitert.\\
-Bei der Fernsteuerung legt auf dem Empfänger einen Nutzer an, welcher eine UDP-Verbindung öffnet. Über diese Verbindung können nun Inhalte eines Statussets von einem Sender verschickt werden.
-Sowohl der Sender, als auch der Empfänger öffnen jeweils ein Fenster. Auf dem Sender dient dieses zum Erhalt von Eingabeereignissen, auf dem Empfänger zur Anzeige der Simulation. Auf dem Sender wird ein Statusset durch Eingabeereignisse partiell geändert. Dieses gesamte Statusset wird zyklisch zum Empfänger gesendet.
+Unter dem neugewonnenen Design können verschiedene Arten von Benutzern definiert werden. Es wird der zunächst der lokale Benutzer definiert um den alten Verwendungszweck abzubilden, und dann eine neue Art Benutzer hinzugefügt, welcher einen Benutzer über eine Netzwerkverbindung abstrahiert. Man vergleiche hierzu die Abbildungen \ref{fig:remotecontrol_design}.\\
+Die Abstraktion eines Benutzers kann in beiden Fällen das Eingabeformat des Kontrollstatus bereitstellen. Der Kontrollstatus wird je nach Art des Benutzers entweder lokal, oder über eine Netzwerkverbindung aktualisiert. 
+In der Simulation werden pro Benutzer egal welcher Art eine Benutzerentität angelegt.
+Diese werden dem Benutzer zugewiesen und sind fähig dessen Kontrollstatus entsprechend zu interpretieren.

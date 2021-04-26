@@ -1,11 +1,11 @@
 Eine Echtzeitsynchronisation einer Simulation auf mehrere über Netzwerk verbundene Rechenmaschinen soll die Äquivalenz der Simulationszustände auf allen beteiligten Maschinen zum selben Zeitpunkt gewährleisten.\\
 Die Synchronität ermöglicht die Verwendung der Simulation auf mehreren Netzwerkknoten, übermittelt die enthaltene Information in der Simulation und ermöglicht Einwirkungen auf deren Inhalt in Kollaboration mit mehreren Benutzern.
-Aspekte der Echtzeit sind dahingehend ausschlaggebend, dass entsprechende Vorgänge der Simulation, unabhängig davon ob ein
-herkömmlich simulierter Simulationsinhalt oder ein Benutzer der Verursacher der Vorgänge ist, trotzdem synchron auf allen beteiligten Maschinen abläuft.\\
+Aspekte der Echtzeit sind dahingehend ausschlaggebend, dass unabhängig davon ob ein
+herkömmlich simulierter Simulationsinhalt durch simulierte Interaktion oder ein Benutzer der Verursacher von Simulationsvorgängen ist, trotzdem synchron auf allen beteiligten Maschinen abläuft.\\
 
 Eine Form der Echtzeitsynchronisation wird im Bereich der Robotik eingesetzt, um eine Echtzeitanforderung zu realisieren. Echtzeitsynchronisation behandelt dabei meist den rechtzeitigen Informationsfluss zwischen Steuergeräten und Sensoren, sodass diese ihre Aufgabe auf Basis wahrer und aktueller Informationen optimal durchführen können.
 %%TODO cite example
-Das wohl ähnlichste Anwendungsbeispiel im Kontext dieser Arbeit lässt sich in Videospielen finden, wo ein Simulationsstatus lokal angezeigt werden muss, ein Spieler jedoch auch selbst Einfluss auf das Geschehen hat.\\
+Das wohl ähnlichste Anwendungsbeispiel im Kontext dieser Arbeit lässt sich in Videospielen finden, wo ein echtzeitsynchronisierter Simulationsstatus lokal angezeigt werden muss, ein Spieler jedoch auch selbst Einfluss auf das Geschehen hat.\\
 In diesem Projekt wird auf einer bestehenden Codebasis einer Simulation, welche nicht unter Einbezug von Synchronisationsgedanken entwickelt wurde, eine solche umgesetzt. Dabei soll eine Echtzeitsynchronisation erreicht werden.
 Das letztendliche Ziel ist die möglichst unmerkliche Synchronisierung zweier Simulationszustände und deren Anzeige.\\
-Es wird sich dabei erhofft im Laufe der Arbeit Kernaspekte zur Synchronisation, aber auch zum benötigten Softwaredesign zu ermitteln, um synchrone Applikationen umzusetzen. Durch den Status-Quo der übernommenen Codebasis, sollen Missstände klar ersichtlich werden.
+Im Laufe der Arbeit werden Kernaspekte zur Synchronisation, aber auch zum benötigten Softwaredesign ermittelt, um synchrone Applikationen umzusetzen. Durch den Status-Quo der übernommenen Codebasis werden durch die Überarbeitung dessen gern gemachte Fehler erkenntlich.

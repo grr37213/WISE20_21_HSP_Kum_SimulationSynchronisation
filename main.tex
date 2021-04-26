@@ -91,16 +91,13 @@
 \section{Einleitung}
 \input{introduction.tex}
 
-\section{Hergang}
-\input{proceedings.tex}
-
 \section{Beschreibung der konkreten Simulationsanwendung}
-Die verwendete Simulationsanwendung ist ein rudimentäres 3D-Shooter-Videospiel. Ein Spieler kann dabei in einem Terrain auf Gegnerfiguren schießen, diese beschädigen und wird dabei durch Punkte entlohnt. Diese einfache Anwendung beinhält bereits alle Kernaspekte einer Simulation:
+Die verwendete Simulationsanwendung ist ein rudimentäres 3D-Shooter-Videospiel. Ein Spieler kann dabei in einem Terrain auf Gegnerfiguren schießen, diese beschädigen und wird dabei durch Punkte entlohnt. Diese einfache Anwendung beinhält bereits alle Kernaspekte einer Simulation im Kontext dieser Arbeit:
 \begin{itemize}
 \item Die Simulation ist gezeitet und läuft in einer bestimmten Rate zur Realzeit. Diese Rate soll meist $1$ sein, bei der physikalische Vorgänge dieselbe Geschwindigkeit wie in der Realität annehmen. Die Simulation besitzt dadurch ihre eigen Simulationszeitbasis.
-\item Verschiedene Arten von zu simulierenden Entitäten in einem Simulierten Raum (Gegner, Spieler, Projektile) mit unterschiedlichem Verhalten/unterschiedlicher Physik, welche sie selbst beschreiben.
+\item Verschiedene Arten von zu simulierenden Entitäten in einem Simulierten Raum (Gegner, Spieler, Projektile) mit unterschiedlichem Verhalten/unterschiedlicher Physik.
 \item Interaktionen zwischen Entitäten (Kollisionen, Anti-Clipping)
-\item Einflüsse durch Bediener/Spieler
+\item Einflüsse durch Bediener/Spieler (Bewegung der Spielerfigur, Erzeugung von Projektilen)
 \item Grafische Ausgabe in Echtzeit zu einer dreidimensionalen Perspektive
 \end{itemize}
 
@@ -114,86 +111,185 @@ In vielen kommerziellen Produkten in der Videospielbranche wird diese Trennung n
 Es folgen Inkonsistenzen in der Simulation in Abhängigkeit der Framerate.
 %%TODO Beispiel Skyrim fliegende Mammuts
 Es existiert dort dann meist eine maximale Framerate.
-Dieser Umstand scheint die Problematik mitzuführen, dass viele Spielehersteller, vor allem im Konsolenbereich, Frameraten immer weiter nach unten limitieren, um ihre Produkte umzusetzen, was die Qualität erheblich senkt 
+Dieser Umstand scheint die Problematik mitzuführen, dass viele Videospielehersteller, vor allem im Konsolenbereich, Frameraten immer weiter nach unten limitieren, um ihre Produkte umzusetzen, was die Qualität erheblich senkt 
 (entgegen der Meinung ihrer Marketingabteilungen
-%%TODO cite
+%%TODO cite 'more cinematic shitstorm'
 ) und dazu führt dass Benutzer ihre u.U.~teure, fähige Hardware nicht ausnutzen können und sich mit schlechter Bildqualität zufrieden geben müssen.
-Es scheint eine grundsätzliche Designentscheidung zu sein, die in einige kommerziell genutzten Engines fehlt.
+Es scheint eine grundsätzliche Designentscheidung zu sein, die in einigen kommerziell genutzten Videospielengines fehlt.\\
+
+Die beschriebene Anwendung funktioniert zu Beginn des Projektes lokal mit einem Benutzer. Es ist Ziel dieser Arbeit möglichst volle Funktionalität auf mehrere Benutzer, welche mit einer Netzwerkverbindung verbunden sind zu erweitern und dabei möglichst wenige negative Seiteneffekte zu erzeugen.
+
+\section{Hergang}
+\input{proceedings.tex}
+
+\section{Entwicklung der Softwarearchitektur einer synchronisierbaren Simulation}
+Durch die Übernahme des Status-Quo eines bestehenden Projektes bestehen Probleme im Design der Applikation, die eine Umsetzung einer Synchronisation zunächst verhindern. Es wird daher eine Überarbeitung der generellen Architektur der Applikation gefordert.\\
+Grundsätzlich wird angenommen, dass eine Echtzeitsynchronisation ständige Kommunikation zwischen beteiligten Knoten erfordert.
+Information über aktiv simulierte Simulationsinhalte sollen so oft wie möglich wiederholt versendet werden, um die auf dem Remote verfügbare Information so aktuell wie möglich zu halten. Dabei müssen Einschränkungen der Übertragungsmedien und -methoden respektiert werden.\\
 
 
-\section{Synchronisierbare Architektur}
-Es soll zunächst die Frage beantwortet werden, wie eine Softwarearchitektur strukturiert sein kann, um eine Synchronisation überhaupt erst vernünftig umsetzen zu können.\\
-Grundsätzlich wird angenommen, dass eine Echtzeitsynchronisation ständige Kommunikation erfordert.
-Information über aktiv simulierte Simulationsinhalte sollen so oft wie möglich wiederholt versendet werden, um die auf dem Remote verfügbare Information so aktuell wie möglich zu halten.
-
-\subsection{Format und Kodierung der Synchronisationsinformation}
-In der Simulation liegt die Information zu ihren Inhalten in Form von gezeiteten Stati vor.
-Eine gezeiteter Status ist der Zustand eines zu synchronisierenden Interesses zu einer bestimmte Simulationszeit.\\
-So ist ein Projektil z.B.~durch Position und Geschwindigkeit zu einem Simulationszeitpunkt dargestellt.\\
-Die wiederholte Übertragung von Stati ist übertragungssicherer und spontaner, da bei Paketverlust eine inhärente Redundanz durch wiederholte Sendevorgänge existiert.
 
 %%TODO clarify and/or find source
 
-\subsection{Transportschicht}
-Für die Transportschicht (ISO-OSI) stehen für uns zwei Protokolle, TCP und UDP, zur Verfügung.
+\subsection{Übertragungsmethoden}
+Zur Echtzeitsynchronisation wird angenommen, dass Aktualisierungsinformation zur Synchronisation der verbundenen Simulationsapplikationen regelmäßig ausgetauscht wird, d.h.~Information wird ständig übertragen, um einen möglichst aktuellen Stand auf dem Remote herzustellen. Ein Remote ist dabei niemals perfekt synchron, es kann nur die Zeit zum letzten bekannten validen Stand möglichst kurz gehalten werden.
 
-Die Verwendung von TCP in Echtzeitsystemen kann zu vorhersehbaren Problemen führen. TCP als Protokoll respektiert eine Sendereihenfolge und sichert vor Paketverlust ab. 
-%%TODO cite
-Bei spontanem Paketverlust fallen Wartezeiten durch Sendewiederholung an, welche weiteren Informationserhalt über den TCP-Socket blockiert.\\
+Zur Entwicklung einer optimalen Übertragung werden verschiedene Aspekte in die Überlegung mit einbezogen:
+
+\subsubsection{Transportschicht}
+Es stehen zwei Protokolle der ISO-OSI Transportschicht zur Verfügung:
+\begin{enumerate}
+\item TCP, mit den relevanten Eigenschaften der Verbindungsorientiertheit, Erhaltung der Reihenfolge und Übertragungsversicherung als Abstraktion einer Stream-Datenstruktur\\
+	Die Eigenschaften von TCP beinhalten für Echtzeitanwendungen jedoch gefährliche vorhersehbare Nachteile:\\
+	Bei spontanem Paketverlust fallen Wartezeiten durch Sendewiederholung an, welche weiteren Informationserhalt über den TCP-Socket blockiert.\\
 Ein Beispiel der unvorteilhaften Verwendung von TCP im Bereich von Videospielen ist das äußerst erfolgreiche und bekannte Spiel Minecraft von Mojang. Hier äußern sich Netzwerkverzögerungen (Lags) durch einen Stillstand der Spielabläufe, der sich über Sekunden ziehen kann und anschließendes Aufholen der Simulationszeit im Zeitraffer. Manch ein unverdientes Game Over kann daher von einem Gegner verursacht werden, der in der Zeit des Stillstandes Angriffe auf den Spieler im TCP-Puffer ansammelt, auf die der Spieler nicht reagieren kann. Dieser Umstand ist umso mehr Schade, wenn das verzögernde Paket zu dieser Zeit bereits schon, aufgrund von Echtzeitanforderungen, irrelevant ist, bzw. bereits ein aktuelleres im Puffer liegt.\\
 %%TODO cite
-TCP ist daher für die wiederholte Sendung von Synchronisationsnachrichten nicht geeignet und es soll dafür UDP verwendet werden.\\
-TCP eignet sich allerdings durch seine Verbindungsorientierung als Kontrollmechanik, um den Aktivitätszustand einer Verbindung zu überprüfen.
+Die Verwendung von TCP für echtzeitrelevante Information ist daher nur ratsam, wenn die zu übertragende Information die von TCP erhaltenen Eigenschaften von Reihenfolge und Übertragungssicherheit auch tatsächlich fordert. In diesem Fall muss ein Protokoll, welches diese Eigenschaften implementiert nicht im Rahmen von UDP selbst umgesetzt werden.\\
+Durch seine Verbindungsorientiertheit bietet sich TCP ebenfalls für die Verbindungskontrolle an, da der Verbindungsstatus, z.B.~ bei abgebrochenen Verbindungen leicht erkannt werden können. Des weiteren lassen sich auf der Basis einer TCP-Verbindung leicht eigene sequenzielle Protokolle implementieren, z.B. um eine Verbindung zweier Applikationen in der Applikationsschicht herzustellen.
+\item UDP, mit den relevaten Eigenschaften der anforderungslosen Übertragung von Datenpaketen\\
+	Im Videospielbereich sehen wir hauptsächlich UDP verwendet, höchstwahrscheinlich
+	da die meisten Informationen im Rahmen der Echtzeitsynchronisation von Videospielen die unter TCP beschriebenen Eigenschaften nicht zwingend fordert.
+\end{enumerate}
 
-Wir verwenden TCP zunächst zur Initialisierung und Aufrechterhaltung der Verbindung über die Transportschicht, für echtzeitrelevante Synchronisationsinformationen wird allerdings UDP verwendet. Benötigte Ports zur Umsetzung der UDP Kommunikation und ähnliche Information wird im Rahmen der Initialisierung über TCP ausgetauscht.
-Wir verwenden TCP außerdem zur Übertragung von speziellen Ereignissen der Simulation, hauptsächlich um das Hinzufügen und Entfernen von Simulationsinhalten umzusetzen. Wir ermitteln unter der derzeitigen Umsetzung als Anforderungen für diese Ereignisse sowohl den Erhalt der zeitlichen Ordnung als auch Versicherung ihrer Kommunikation. Beides sind Anforderungen die TCP erfüllt.
+Im Folgenden werden diese Protokolle für hier enthaltenen Verwendungszwecke in Betracht gezogen und entsprechend ihrer Eigenschaften gewählt.
+
+\subsubsection{Informationsformat}
+
+Es werden prinzipiell zwei grundlegende Formate von Information betrachtet.
+\begin{enumerate}
+\item Statusinformation\\
+In der Simulation liegt die Information zu ihren Inhalten in Form von gezeiteten Stati vor, d.h. ein Zustand eines Interesses zu einem bestimmten Zeitpunkt, sei dieser Real- oder Simulationszeit. \\
+So ist ein Projektil z.B.~durch Position und Geschwindigkeit zu einem Simulationszeitpunkt dargestellt, welche nach entsprechenden physikalischen Gesetzen aktualisiert werden kann.\\
+Die wohl interessanteste Eigenschaft von Statusinformation im Rahmen der Synchronisierung ist bei Mitführung des Zeitpunktes der Validität der Information die inhärente Redundanz bei wiederholter Übertragung durch simples überschreiben älterer Stati, welche die Übertragung sehr robust macht.
+Das präferierte Übertragungsprotokoll für diese Art Information ist UDP, da es dessen Eigenschaftsprofil entspricht.
+Wir erkennen jedoch auch, dass das Optimierungspotential von Synchronisationsprotokollen bei der Verwendung von roher Statusinformation beschränkt ist. Bei vielen Entitäten, oder bei komplexen Entitäten wird der benötigte Sendungsumfang unter Umständen zu groß.
+Zum Beispiel werden beim Schießen einer Schrotflinte in der Simulation theoretisch zigfach Projektile frei, welche dann simuliert und synchronisiert werden sollen.
+Unter der Verwendung von Statusinformation zur Synchronisation dieser Projektile steigt die Menge der zur Synchronisation versendeten Daten mindestens linear.\\
+Dieser Umstand kann nur durch eine abstraktere Behandlung von mehreren Projektilen in der Simulation, beispielsweise als Schwarm, oder eine abstraktere Übertragungsmethode abgeschwächt werden.
+\item Aktualisierungsinformation\\
+beschreibt die Änderung eines Zustands zu einem bestimmten Zeitpunkt. Diese umfassen meist codierte Anweisungen oder arithmetische Differenzen, welche auf den Status am Empfänger aufgerechnet werden.\\
+Ein Problem mit Änderungsinformation besteht, wenn diese keine kommutativen und/oder assoziativen Eigenschaften beinhaltet und so sowohl die Übertragungsreihenfolge als auch die Übertragung selbst abgesichert sein muss, um die Äquivalenz des am Empfänger ermittelten Simulationsstatus herzustellen. In diesem Fall ist das präferierte Übertragungsprotokoll TCP, da dieses die so geforderten Eigenschaften mitbringt. Ist die Reihenfolge oder das Fehlen der Information am Empfänger allerdings nicht kritisch kann auch hierfür einfach UDP verwendet werden. Es ist jedoch hier essentiell eine Analyse zu vollziehen, da sonst zu synchronisierende Simulationsstati sich plötlich desynchronisieren können.
+\item Initialisierungsinformation\\
+Beim Verbindungsaufbau müssen ebenfalls schon Informationen ausgetauscht werden. Dabei sind einige Verbindungsorganisatorisch, andere können allerdings auch die Simulation direkt betreffen. 
+Derzeitig fallen nur organisatorische Informationen an, sämtliche die Simulation betreffenden Initialisierungsdaten, sowie Ressourcen, sind an beiden Enden der Verbindung statisch bekannt.
+TCP wird für den initialen Austausch von Informationen zwischen den beteiligten Applikationen verwendet. Zu den Aufgaben hier zählen:
+\begin{itemize}
+\item Filterung von Fremdverbindungen durch eine applikationsspezifische Begrüßung
+\item Identifikation von Servern und Clients (wir verzichten im Rahme dieser Arbeit auf Sicherheitsaspekte, wie z.B. saubere Authentifizierung, etc.)
+\item Die Übermittlung der Adressierung von UDP-Sockeln der jeweiligen Knoten.
+\item Die Übertragung von Synchronisationsinformation, welche nicht dem herkömmlichen Profil von übertragenen Simulationsstati entspricht. Die konkrete Verwendung von TCP in diesem Kontext wird in Abschnitt %%TODO ref
+genauer beschrieben und begründet.
+\end{itemize}
+\end{enumerate}
+
+\subsubsection{Generelle Präferenz}
+Die Übertragung von Statusinformation via UDP wird unter den gegebenen Anforderungen auf Grund seiner Robustheit und Einfachheit als präferiert angesehen. Es wird zunächst versucht so viele Features wie möglich über diese Übertragungsstrategie abzubilden.\\
+Die Verwendung von Änderungsinformation wird sich für andere Verwendungszwecke vorbehalten, hauptsächlich, da das Optimierungspotential hier höher scheint.
+
 
 \subsection{Anmerkungen zur übernommenen Codebasis}
-Durch die Hinzunahme von Echtzeitsynchronisationsfähigkeit als Anforderung an die Applikation werden im Design der übernommenen Codebasis schnell Verletzungen des Separation of concerns Prinzips ersichtlich.\\
-Das Fehlen von Anforderungen hinsichtlich mehrerer Benutzer und Fernsteuerung von Simulationsinhalten erlaubt in der übernommenen Codebasis für kurze Implementierungswege durch viele $1:1$ Beziehungen, welche sich hier als kritisch erweisen. Belange(Concerns) wurden über besagte $1:1$ Beziehungen daher oft nicht sauber abgegrenzt, Abhängikeiten sind unnötig engmaschig vernetzt. Viele Basisaspekte der Simulationsengine mussten daher komplett neu erdacht und designed werden, was den Hauptanteil der im Projekt aufgebrachten Zeit ausmacht.\\
-Oberflächlich unbeteiligte Features mussten durch Abhängigkeiten ebenfalls oft umgebaut werden oder es drohte der Verlust des Features. Dabei wurde oft eine Neurealisierung des Features genauso Umfangreich wie seine Entfernung eingeschätzt.
-Die konkreten vollzogenen Änderungen sind oft umfangreich und weitreichend, ihre Begründung allerdings komplex, detailreich und daher für diesen Bericht nicht geeignet.\\
+Durch die Hinzunahme von Echtzeitsynchronisationsfähigkeit als Anforderung an die Applikation werden im Design der übernommenen Codebasis schnell Verletzungen des \textit{Separation of Corcerns} Prinzips ersichtlich.\\
+Das Fehlen von Anforderungen hinsichtlich mehrerer Benutzer und Fernsteuerung von Simulationsinhalten erlaubt in der übernommenen Codebasis für kurze Implementierungswege durch viele $1:1$ Beziehungen, welche sich hier weiter als kritisch erweisen. Belange(Concerns) waren über besagte $1:1$ Beziehungen daher oft nicht sauber für den Zweck einer Synchronisation abgegrenzt, Komponenten sind unnötig engmaschig vernetzt. Viele Basisaspekte der Simulationsengine werden daher komplett neu erdacht und designed, was den Hauptanteil der im Projekt aufgebrachten Zeit ausmacht.\\
+Auch viele periphere Features müssen überarbeitet werden, oder es droht der Verlust des Features. Dabei werden oft Neurealisierungen des Features genauso Umfangreich wie seine Entfernung eingeschätzt.
+Die konkreten vollzogenen Änderungen sind oft umfangreich und weitreichend, ihre Begründung allerdings komplex, detailreich und werden daher für diesen Bericht nicht als geeignet oder interessant eingeschätzt.\\
 Wir erfahren so die Grundlegenheit, Kritikalität und Komplexität einer Anforderungsänderung in Punkten Synchronisation.
-Das frühzeitige Miteinbeziehen einer Synchronisation- oder Echtzeitanforderung ist ratsam.
+Es bestätigt, dass das frühzeitige Miteinbeziehen einer Synchronisations- oder Echtzeitanforderung in Softwareprojekten ratsam ist.
+
 
 \subsection{Applikationsdesign}
-Der Umbau der übernommenen Codebasis erfolgt sukzessiv, iterativ wie gebraucht. So konnten die in
-%%TODO cite section
-Abschnitt \ref{woasined}
-angedeuteten Meilensteine abgearbeitet werden.\\
-Es werden die letztendlichen Ergebnisse des Umbaus präsentiert, welche alle einbezogenen Aspekte beinhalten:
+Der Umbau der übernommenen Codebasis erfolgt sukzessiv und iterativ nach Bedarf. 
+So werden die in Abschnitt~\ref{sec:proceedings} beschriebenen Meilensteine abgearbeitet.\\
+Es werden die letztendlichen Ergebnisse des Umbaus der allgemeinen Softwarearchitektur präsentiert, welche alle einbezogenen Aspekte beinhalten:
 
-Im Rahmen des Umbaus werden mehrere für das Design zentrale Abstraktionen angelegt. Dabei sind einige Neukreationen, manche entstanden aus extrahierten Features von anderen Abstraktionen und wieder andere sind alte Abstraktionen, welche auf spezifischere, isoliertere Belange reduziert wurden:
+Im Rahmen des Umbaus werden mehrere für das Design zentrale Abstraktionen angelegt.
+Diese bestehen aus Abstraktionen aus der übernommenen Codebasis, Neukreationen, und Isolationen von Belangen aus bereits bestehenden Abstraktionen. Im Sinn dieses Berichts wird sich in der folgenden Liste auf die relevanten Abstraktionen im Rahmen der Synchronisation beschränkt.
 
 \begin{enumerate}
 \item Simulation\\
-Die Simulation ist der Backend-Kern des Programms. Hier wird simuliert, d.h. zu simulierende Inhalte werden einer Simulationszeit ausgesetzt. Dieser Teil kümmert sich um die korrekte Umsetzung von Inhalten der Simulation und ihrer Ausführung. Die Abstraktion dient auch der Möglichkeit der Umsetzung verschiedener Objektive der Simulation.
+Die Simulation ist der Backend-Kern der Applikation. Hier sitzen Simulationsinhalte und werden der Simulationszeit ausgesetzt. Die Abstraktion dient auch der Möglichkeit der Umsetzung verschiedener Objektive der gesamten Simulation, sei dies ein Testzweck oder die Umsetzung eines Produkts, wie der Shooter-Applikation.
 \item User\\
 Der User ist die Repräsentation eines (menschlichen) Bedieners und regelt somit bestimmte Ein- und Ausgabevektoren der Simulation, so wie sämtliche Ressourcen die zur Ermittlung oder Verarbeitung dieser benötigt werden.
 \item Entitäten\\
-Sind Inhalte der Simulation. Eine Entität beschreibt ein "Etwas", das simuliert werden soll. Eine Entität beschreibt ihr Verhalten in Abhängigkeit zur Simulationszeit und kann Interaktionen mit anderen Entitäten eingehen. Entitäten werden genauer im Anhang erklärt \ref{sec:entity}.
-\item Userentität\\
-Eine spezielle Entität, welche als Avatar für den User in der simulierten Welt dient. Diese Spezialisierung ist essentiell im Bereich von Videospielen, um dem Spieler Zugang zur simulierten Welt zu geben. Die Userentität implementiert Reaktionen in Form von Aktionen der Entität auf bestimmte Eingabeparameter und ermöglicht den Erhalt einer Perspektive auf einen simulierten Raum, v.A.~für Zwecke des Renderings.
-\item Ereignisverarbeitung\\
-Über Bibliotheken werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse(eng. \textit{events}) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
-\item 3D Renderer der Simulation\\
-Die Aufgabe des Renderers ist es, ein Bild des simulierten Raums aus einer bestimmte Perspektive zu erstellen und auf ein Fenster zu malen.
-Ein Renderer greift lesend in viele Aspekte der Simulation ein, um die Informationen für seine Aufgabe zu erhalten.
+Sind Simulationsinhalte. Eine Entität beschreibt ein "Etwas", das simuliert werden soll, im konkreten etwas, welches sich im simulierten Raum befindet. Eine Entität beschreibt ihr Verhalten in Abhängigkeit zur Simulationszeit und kann Interaktionen mit anderen Entitäten eingehen. Entitäten werden genauer im Anhang~\ref{sec:entity} erklärt.
+\item Benutzerentität/Spielerfigur\\
+Eine spezielle Entität, welche als Avatar für den Benutzer in der simulierten Welt dient. Diese Spezialisierung ist essentiell im Bereich von Videospielen, um dem Spieler Zugang zur simulierten Welt zu geben indem die Spielerfigur Interaktionen verursacht. Die Benutzerentität implementiert dabei im Entitätsverhalten die Reaktion auf Eingabeparameter eines Benutzers und ermöglicht den Erhalt einer Perspektive auf einen simulierten Raum, v.A.~für Zwecke des Renderings aus der dreidimensionalen Perspektive der Figur.
 \item OS-Zugang\\
 Enthält Zugriff und Schnittstellen zu Ressourcen des Betriebssystems, dem Fenster, Ereignisquelle, Lautsprecher, etc.
+\item Ereignisverarbeitung\\
+Über Bibliotheken werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse(eng. \textit{events}) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
+Weiter sollen natürlich Eingaben für die Verwendung als Steuerung der Simulation verwendet werden. Die Ereignisverarbeitung beschreibt dabei ein System, welches die Eingaben in einen von der Simulation,bzw.~von Benutzerentitäten interpretierbaren Status umwandelt.
+\item 3D Renderer der Simulation\\
+Die Aufgabe des Renderers ist es, ein Bild des simulierten Raums aus einer bestimmte Perspektive zu erstellen und auf ein Fenster des Betriebssystems zu übertragen.
+Ein Renderer greift lesend in viele Aspekte der Simulation ein, um die Informationen für seine Aufgabe zu erhalten.
 \item Applikationskopf\\
 Als zentrale Organisationsstruktur des Programms ist es die Aufgabe des Applikationskopfes, den Programmablauf zu Regeln. Das Programm besteht in seinem Kern aus einer Schleife, in der wiederholt andere genannte Subkomponenten ihre Verarbeitungsschritte durchführen. Der Applikationskopf dient dabei als Abstraktion für das Verhalten der Gesamtapplikation. So können verschiedene Verwendungszwecke, bzw. Arten der Gesamtapplikation (Standardprogramm, Fernbedienung, Simulation mit Fernbedienungsempfänger, etc.) realisiert werden.
 \end{enumerate}
 
-Diese Abstraktionen erlauben uns nun die Umsetzung benötigter, konkreter Features, die vorher so nicht möglich waren:
+\begin{figure}
+
+\centering
+\resizebox{.9\linewidth}{!}{
+\begin{tikzpicture}[thick,scale=1, every node/.style={scale=1}]
+\begin{package}{Applikation}
+\begin{class}{Applikationskopf}{0,0}
+\end{class}
+\begin{class}{Renderer}{-3, -3}
+\end{class}
+\begin{class}{Simulation}{4,-1}
+\end{class}
+\begin{class}{Ereignisverarbeitung}{-9,-2}
+\end{class}
+\begin{class}{OS/Window}{-9,-3}
+\end{class}
+\begin{class}{Entity}{9, -2}
+\end{class}
+\begin{class}{User}{-4,-1}
+\end{class}
+\begin{class}{Userentity}{9,-3}
+\inherit{Entity}
+\end{class}
+
+
+\aggregation{Applikationskopf}{1}{}{Simulation}
+\aggregation{Applikationskopf}{1}{}{User}
+\composition{User}{1}{}{Ereignisverarbeitung}{j1}{}
+\aggregation{Simulation}{1}{}{Userentity}{N}{}
+\composition{User}{1}{}{OS/Window}{1}{}
+\aggregation{Simulation}{1..*}{}{Entity}
+\association{Simulation}{1}{}{User}{}{N}
+\association{Renderer}{1}{}{OS/Window}{1}{}
+\association{Renderer}{N}{}{Simulation}{1}{}
+\aggregation{User}{1}{}{Renderer}
+
+\end{package}
+%%\draw [dashed] (0,1) -- (0,-5);
+\end{tikzpicture}
+}
+\caption{UML-Klassendiagramm zur Veranschaulichung der hier umgesetzten Architektur.}
+\label{fig:new_architecture}
+\end{figure}
+
+Die Abbildung~\ref{fig:new_architecture} zeigt die neugewonnene Architektur anhand der Abstraktionen und ihrer Abhängigkeiten untereinander.
+
+Die Existenz dieser konkretisierten Abstraktionen erlauben uns nun die Umsetzung benötigter Features, die vorher so nicht möglich waren:
 \begin{itemize}
-\item Dislokation eines Benutzers hinter eine Netzwerkverbindung
-\item Behandlung mehrerer Benutzer, mehrerer Eingaben
-\item Optionalität einer grafischen Ausgabe
-\item Unterschiedliche grafische Ausgabeperspektiven zwischen Benutzern
-\item Kontrolle von schreibendem Zugriff eines auf Simulationsinhalte (für Clients)
-\item Stabiler Applikationsstart unabhängig zu einer Simulation (Öffnen des Fensters, Mausverhalten)
+\item Dislokation eines Benutzers hinter eine Netzwerkverbindung\\
+	Durch die Abstraktion eines Benutzers kann dieser für den kontext einer Lokalen oder Remoteverbindung abstrahiert werden.
+\item Behandlung mehrerer Benutzer, mehrerer Eingaben\\
+	Vor allem die isolierte Abstraktion der Simulation kann nun auf die Fähigkeit zur Behandlung meherer Benutzer erweitert werden.
+\item Optionalität einer grafischen Ausgabe\\
+	Durch die Trennung der Perspektive von der Spielerfigur kann nun entschieden werden, ob ein 3D-Renderer überhaupt initialisiert wird. Das ist vor allem für die Anforderung mehrerer Benutzer von Interesse, weil so theoretisch beliebig viele Perspektiven der existierenden Spielerfiguren gerendert werden können. Die grafik ist dadurch nicht nur flexibler, es macht auch die Implementierung eines dedizierten Servers (ohne lokalen Benutzer) möglich.
+\item Unterschiedliche grafische Ausgabeperspektiven\\
+	Es ist möglich einer graphischen Ausgabe unterschiedliche Perspektiven zur Anzeige zuzuweisen. Vorausgesetzt mehrere aktive Simulationsinhalte sind dazu fähig eine Perspektive zu spezifizieren (derzeitig nur eine Art von Spielerfigur)
+\item Kontrolle von schreibendem Zugriff eines auf Simulationsinhalte (für Clients)\\
+Die Unterscheidung der Simulation und der Simulationsinhalte/Entitäten ermöglicht die Übertragung der Simulationsinhalte außerhalb des konkreten Kontextes der aktiven Simulation. So müssen Simulationsinhalte nicht von ausschließlich der Simulation aktualisiert werden, sondern dies kann z.B. über eine Netzwerkverbindung geschehen.
+\item Stabiler Applikationsstart unabhängig zu einer Simulation (Öffnen des Fensters, Mausverhalten)\\
+	Durch die Abgrenzung von Belangen vor allem hinsichtlich benötigter Systemressourcen von der Simulationsanwendung ermöglicht benutzerdefinierte Einstellungen der Applikation durch Konfiguration, Eingabeparameter.
+	So können verschiedene Applikationskontexte realisiert werden, z.B.~als Client, als Server, nur Lokal, Fernsteuerung, etc..
+	Des Weiteren kann so einfacher das Laden von benötigten Applikationsressourcen, besonders im grafischen Kontext gesteuert werden.
 \end{itemize}
+
+Wie diese nun ermöglichten Features im Weiteren zur Umsetzung der Projektziele verwendet werden werden in den folgenden Abschnitten erläutert.
 
 \input{remotecontrol.tex}
 
