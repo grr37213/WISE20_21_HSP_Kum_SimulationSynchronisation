@@ -1,11 +1,44 @@
-Eine Echtzeitsynchronisation einer Simulation auf mehrere über Netzwerk verbundene Rechenmaschinen soll die Äquivalenz der Simulationszustände auf allen beteiligten Maschinen zum selben Zeitpunkt gewährleisten.\\
-Die Synchronität ermöglicht die Verwendung der Simulation auf mehreren Netzwerkknoten, übermittelt die enthaltene Information in der Simulation und ermöglicht Einwirkungen auf deren Inhalt in Kollaboration mit mehreren Benutzern.
-Aspekte der Echtzeit sind dahingehend ausschlaggebend, dass unabhängig davon ob ein
-herkömmlich simulierter Simulationsinhalt durch simulierte Interaktion oder ein Benutzer der Verursacher von Simulationsvorgängen ist, trotzdem synchron auf allen beteiligten Maschinen abläuft.\\
 
-Eine Form der Echtzeitsynchronisation wird im Bereich der Robotik eingesetzt, um eine Echtzeitanforderung zu realisieren. Echtzeitsynchronisation behandelt dabei meist den rechtzeitigen Informationsfluss zwischen Steuergeräten und Sensoren, sodass diese ihre Aufgabe auf Basis wahrer und aktueller Informationen optimal durchführen können.
+
+\subsection{Kontext und Motivation}
+Eine Echtzeitsynchronisation einer Simulation auf mehrere über Netzwerk verbundene Rechenmaschinen soll die Äquivalenz der Simulationszustände auf allen beteiligten Maschinen zum selben, oder annehmbar ähnlichen Zeitpunkt gewährleisten.\\
+Das Ziel ist die Kollaborative Verwendung der Simulation. 
+Dazu zählen sowohl die Anzeige von Simulationsinhalten, als auch
+die benutzerdefinierte Veränderung dieser. 
+Die Synchronisation der Simulationszustände beinhaltet demnach die rechtzeitige Synchronisation der Änderungen.
+
+Nach dieser Definition oder nach dessen Teilen, finden wir Echtzeitsynchronisation in industriellen Anwendungen wieder. Zum Beispiel kann im Bereich der Robotik der rechtzeitige Informationsfluss zwischen Steuergeräten und Sensoren als Echtzeitsynchronisation angesehen werden.
 %%TODO cite example
-Das wohl ähnlichste Anwendungsbeispiel im Kontext dieser Arbeit lässt sich in Videospielen finden, wo ein echtzeitsynchronisierter Simulationsstatus lokal angezeigt werden muss, ein Spieler jedoch auch selbst Einfluss auf das Geschehen hat.\\
-In diesem Projekt wird auf einer bestehenden Codebasis einer Simulation, welche nicht unter Einbezug von Synchronisationsgedanken entwickelt wurde, eine solche umgesetzt. Dabei soll eine Echtzeitsynchronisation erreicht werden.
-Das letztendliche Ziel ist die möglichst unmerkliche Synchronisierung zweier Simulationszustände und deren Anzeige.\\
-Im Laufe der Arbeit werden Kernaspekte zur Synchronisation, aber auch zum benötigten Softwaredesign ermittelt, um synchrone Applikationen umzusetzen. Durch den Status-Quo der übernommenen Codebasis werden durch die Überarbeitung dessen gern gemachte Fehler erkenntlich.
+Das wohl ähnlichste Anwendungsbeispiel im Kontext dieser Arbeit lässt sich im Bereich der Videospiele, oder Bedienersimulationen finden, wo ein echtzeitsynchronisierter Simulationsstatus auf mehreren Maschinen lokal angezeigt werden muss, Bediener jedoch auch selbst Einfluss auf die Simulationsinhalte nehmen können.\\
+In diesem Projekt wird auf einer bestehenden Codebasis einer Simulation, welche nicht unter Einbezug von Synchronisationsgedanken entwickelt wurde, eine solche umgesetzt. Dabei soll eine Echtzeitsynchronisation erreicht zwischen mehreren Rechenmaschinen über eine herkömmliche Internetverbindung (z.B. DSL 16000) werden.
+Das letztendliche Ziel ist die möglichst unmerkliche Synchronisierung zweier Simulationszustände und deren Anzeige, d.h. die Reduzierung von Seiteneffekten durch Latenz.\\
+Im Laufe der Arbeit werden Kernaspekte zur Synchronisation, aber auch zum benötigten Softwaredesign ermittelt, um synchrone Applikationen umzusetzen. Durch den Status-Quo der übernommenen Codebasis werden durch die Überarbeitung dort gemachte Fehler in diesen Aspekten erkenntlich.
+
+\subsection{Beschreibung der konkreten Simulationsanwendung}
+Die verwendete Simulationsanwendung ist ein rudimentäres 3D-Shooter-Videospiel. Ein Spieler kann dabei in einem Terrain auf Gegnerfiguren schießen, diese beschädigen und wird dabei durch Punkte entlohnt. Diese einfache Anwendung hält bereits alle Kernaspekte einer Simulation im Kontext dieser Arbeit inne:
+\begin{itemize}
+\item Die Simulation ist gezeitet und läuft in einer bestimmten Rate zur Realzeit. Diese Rate soll meist $1$ sein, bei der programmierte physikalische Vorgänge dieselbe Geschwindigkeit wie in der Realität annehmen. Die Simulation besitzt dadurch ihre eigene Simulationszeitbasis.
+\item Verschiedene Arten von zu simulierenden Entitäten in einem Simulierten Raum (Gegner, Spielerfiguren, Projektile, Geräusche) mit unterschiedlichem Verhalten/unterschiedlicher Physik.
+\item Interaktionen zwischen Entitäten (Kollisionen, Anti-Clipping)
+\item Einflüsse durch Bediener/Spieler (Bewegung der Spielerfigur, Erzeugung von Projektilen)
+\item Grafische Ausgabe in Echtzeit zu einer dreidimensionalen Perspektive
+\end{itemize}
+
+Die Simulation von Simulationsinhalten erfolgt in Schritten, in denen ein Inhalt von einem bestehenden Zustand auf einen Zustand zu fortgeschrittener Simulationszeit verändert wird. Ein solcher Zeitschritt wird als Tick bezeichnet (siehe Appendix \ref{sec:tick} oder vgl. Quelle \ref{tick}).\\
+Die Anzeige der Simulation erfolgt durch Inter-/Extrapolation der bekannten Zustände von Simulationsinhalten zu einem bestimmten Simulationszeitpunkt. Die Anzeige führt dabei keine Änderungen auf den Simulationsinhalten durch. Wir bezeichnen den Prozess sowie sein Ergebnis als Frame (vgl. Appendix \ref{sec:tick}).
+Die Framerate kann ungleich der Tickrate sein, um unabhängig von den Fähigkeiten des Anzeigesystems eine flüssiges Bild zu generieren. Da in einem Frame keine Simulationsinhalte geändert werden, sind die Simulationinhalte komplett unabhängig zur Anzeige.\\
+
+In vielen kommerziellen Produkten in der Videospielbranche wird diese Trennung nicht sauber vollzogen.\\
+Es folgen Inkonsistenzen in der Simulation in Abhängigkeit der Framerate.
+(Beispiel in \glqq The Elder Scrolls V: Skyrim\grqq falsche physikalische Berechnungen auf Grund zu hoher Frameraten lernen Mammuts das Fliegen \cite{flying-fucking-mammoths})
+Es existiert dort dann meist eine maximale Framerate.
+Dieser Umstand scheint die Problematik mitzuführen, dass viele Videospielehersteller, vor allem im Konsolenbereich, Frameraten immer weiter nach unten limitieren, um ihre Produkte umzusetzen, was die Qualität erheblich senkt (Beispiele \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
+(entgegen der Meinung ihrer Marketingabteilungen, mit einer Menge negativer Presse, Beispiele \cites{morecinematic00, morecinematic01}
+) und dazu führt dass Benutzer ihre u.U.~teure, fähige Hardware nicht ausnutzen können und sich mit schlechter Bildqualität zufrieden geben müssen.\\
+Ein Umstand, der oft auf umständlichem Weg durch fähige Konsumenten selbstständig gelöst wird (vgl. \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
+Die Trennung von Physik und Grafik scheint eine grundsätzliche Designentscheidung zu sein, die in vielen kommerziell genutzten Engines fehlt.
+
+Die beschriebene Anwendung funktioniert zu Beginn des Projektes lokal mit einem Benutzer. Es ist Ziel dieser Arbeit möglichst volle Funktionalität auf mehrere Benutzer, welche mit einer Netzwerkverbindung verbunden sind zu erweitern und dabei möglichst wenige negative Seiteneffekte zu erzeugen.
+
+\subsection{Hergang}
+\input{proceedings.tex}
