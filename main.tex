@@ -65,7 +65,6 @@
 \newcommand{\AABB}{\mathit{AABB}}
 \newcommand{\qb}{\operatorname{QB}}
 
-
 \begin{document}
 
 \title{HSP-Projektarbeit im Master Informatik \\
@@ -91,50 +90,36 @@
 \section{Einleitung}
 \input{introduction.tex}
 
-\section{Beschreibung der konkreten Simulationsanwendung}
-Die verwendete Simulationsanwendung ist ein rudimentäres 3D-Shooter-Videospiel. Ein Spieler kann dabei in einem Terrain auf Gegnerfiguren schießen, diese beschädigen und wird dabei durch Punkte entlohnt. Diese einfache Anwendung beinhält bereits alle Kernaspekte einer Simulation im Kontext dieser Arbeit:
-\begin{itemize}
-\item Die Simulation ist gezeitet und läuft in einer bestimmten Rate zur Realzeit. Diese Rate soll meist $1$ sein, bei der physikalische Vorgänge dieselbe Geschwindigkeit wie in der Realität annehmen. Die Simulation besitzt dadurch ihre eigen Simulationszeitbasis.
-\item Verschiedene Arten von zu simulierenden Entitäten in einem Simulierten Raum (Gegner, Spieler, Projektile) mit unterschiedlichem Verhalten/unterschiedlicher Physik.
-\item Interaktionen zwischen Entitäten (Kollisionen, Anti-Clipping)
-\item Einflüsse durch Bediener/Spieler (Bewegung der Spielerfigur, Erzeugung von Projektilen)
-\item Grafische Ausgabe in Echtzeit zu einer dreidimensionalen Perspektive
-\end{itemize}
-
-Die Simulation von Simulationsinhalten erfolgt in Schritten, in denen ein Inhalt von einem bestehenden Zustand auf einen Zustand zu fortgeschrittener Simulationszeit verändert wird. Ein solcher Zeitschritt wird als Tick bezeichnet.\\
-%%TODO cite Appendix
-Die Anzeige der Simulation erfolgt durch Inter-/Extrapolation der bekannten Zustände von Simulationsinhalten zu einem bestimmten Simulationszeitpunkt. Die Anzeige führt dabei keine Änderungen auf den Simulationsinhalten durch. Wir bezeichnen den Prozess sowie sein Ergebnis als Frame.
-%%TODO cite Appendix
-Die Framerate kann ungleich der Tickrate sein, um unabhängig von den Fähigkeiten des Anzeigesystems eine flüssiges Bild zu generieren. Da in einem Frame keine Simulationsinhalte geändert werden, sind die Simulationinhalte komplett unabhängig zur Anzeige.\\
-
-In vielen kommerziellen Produkten in der Videospielbranche wird diese Trennung nicht sauber vollzogen.\\
-Es folgen Inkonsistenzen in der Simulation in Abhängigkeit der Framerate.
-%%TODO Beispiel Skyrim fliegende Mammuts
-Es existiert dort dann meist eine maximale Framerate.
-Dieser Umstand scheint die Problematik mitzuführen, dass viele Videospielehersteller, vor allem im Konsolenbereich, Frameraten immer weiter nach unten limitieren, um ihre Produkte umzusetzen, was die Qualität erheblich senkt 
-(entgegen der Meinung ihrer Marketingabteilungen
-%%TODO cite 'more cinematic shitstorm'
-) und dazu führt dass Benutzer ihre u.U.~teure, fähige Hardware nicht ausnutzen können und sich mit schlechter Bildqualität zufrieden geben müssen.
-Es scheint eine grundsätzliche Designentscheidung zu sein, die in einigen kommerziell genutzten Videospielengines fehlt.\\
-
-Die beschriebene Anwendung funktioniert zu Beginn des Projektes lokal mit einem Benutzer. Es ist Ziel dieser Arbeit möglichst volle Funktionalität auf mehrere Benutzer, welche mit einer Netzwerkverbindung verbunden sind zu erweitern und dabei möglichst wenige negative Seiteneffekte zu erzeugen.
-
-\section{Hergang}
-\input{proceedings.tex}
-
 \section{Entwicklung der Softwarearchitektur einer synchronisierbaren Simulation}
-Durch die Übernahme des Status-Quo eines bestehenden Projektes bestehen Probleme im Design der Applikation, die eine Umsetzung einer Synchronisation zunächst verhindern. Es wird daher eine Überarbeitung der generellen Architektur der Applikation gefordert.\\
+Durch die Übernahme des Status-Quo eines bestehenden Projektes bestehen zunächst Probleme im Design der Applikation, die eine Umsetzung einer Synchronisation verhindern. Es ist daher eine Überarbeitung der generellen Architektur der Applikation gefordert, welche im Projekt sukzessive nach Bedarf per Meilenstein abgearbeitet wird.\\
 Grundsätzlich wird angenommen, dass eine Echtzeitsynchronisation ständige Kommunikation zwischen beteiligten Knoten erfordert.
 Information über aktiv simulierte Simulationsinhalte sollen so oft wie möglich wiederholt versendet werden, um die auf dem Remote verfügbare Information so aktuell wie möglich zu halten. Dabei müssen Einschränkungen der Übertragungsmedien und -methoden respektiert werden.\\
-
-
-
-%%TODO clarify and/or find source
+Die Last der Verarbeitung von Netzwerkkommunikation gegenüber der Last der aktiven lokalen Simulation von Inhalten wird als Vergleichsweise gering auf Grund der zur Verfügung stehenden Verbindung eingeschätzt. Relevante Parameter sind hier Latenz und Bandbreite.
 
 \subsection{Übertragungsmethoden}
-Zur Echtzeitsynchronisation wird angenommen, dass Aktualisierungsinformation zur Synchronisation der verbundenen Simulationsapplikationen regelmäßig ausgetauscht wird, d.h.~Information wird ständig übertragen, um einen möglichst aktuellen Stand auf dem Remote herzustellen. Ein Remote ist dabei niemals perfekt synchron, es kann nur die Zeit zum letzten bekannten validen Stand möglichst kurz gehalten werden.
+\label{sec:transmission_formats}
+Perfekte Synchronität ist unter den Umständen von Latenz und der Möglichkeit der Einwirkung auf den Simulationszustand durch einen Bediener utopisch, da so unberechenbare Änderungen für den Simulationszustand existieren.
+Zur Entwicklung einer möglichst optimalen Übertragung werden verschiedene Aspekte in die Überlegung mit einbezogen, wie die folgenden Abschnitte zeigen.
 
-Zur Entwicklung einer optimalen Übertragung werden verschiedene Aspekte in die Überlegung mit einbezogen:
+\subsubsection{Übertragungszweck}
+Die Übertragung von Information im Rahmen der Synchronisation dient verschiedenen Teilzwecken.
+Es wird zwischen Arten von Information unterschieden, für welche unterschiedliche Anforderungen für die Übertragung bestehen:
+\begin{itemize}
+\item Initialisierungsinformation\\
+Beim initialen Verbindungsaufbau müssen Informationen ausgetauscht werden.
+Derzeitig fallen nur organisatorische Informationen an, sämtliche die Simulation betreffenden Initialisierungsdaten, sowie Ressourcen, sind an beiden Enden der Verbindung statisch bekannt.
+Zu den Aufgaben hier zählen:
+\begin{itemize}
+\item Filterung von Fremdverbindungen durch eine Begrüßung spezifisch zur Applikation
+\item Identifikation von Servern und Clients (wir verzichten im Rahme dieser Arbeit auf Sicherheitsaspekte, wie z.B. saubere Authentifizierung, etc.)
+\item Die Übermittlung der Adressierung von UDP-Sockeln der jeweiligen Knoten.
+\end{itemize}
+\item Echtzeitinformation\\
+Information die sich ändert, insbesondere wenn die Änderung frequent ist.
+Dies sind meist die Stati von Simulationsinhalten.
+\end{itemize}
+
+Außerdem kann für bestimmte Zwecke berechenbarer oder statischer Determinismus eingesetzt werden, um eine Übertragung komplett zu vermeiden.
 
 \subsubsection{Transportschicht}
 Es stehen zwei Protokolle der ISO-OSI Transportschicht zur Verfügung:
@@ -142,11 +127,10 @@ Es stehen zwei Protokolle der ISO-OSI Transportschicht zur Verfügung:
 \item TCP, mit den relevanten Eigenschaften der Verbindungsorientiertheit, Erhaltung der Reihenfolge und Übertragungsversicherung als Abstraktion einer Stream-Datenstruktur\\
 	Die Eigenschaften von TCP beinhalten für Echtzeitanwendungen jedoch gefährliche vorhersehbare Nachteile:\\
 	Bei spontanem Paketverlust fallen Wartezeiten durch Sendewiederholung an, welche weiteren Informationserhalt über den TCP-Socket blockiert.\\
-Ein Beispiel der unvorteilhaften Verwendung von TCP im Bereich von Videospielen ist das äußerst erfolgreiche und bekannte Spiel Minecraft von Mojang. Hier äußern sich Netzwerkverzögerungen (Lags) durch einen Stillstand der Spielabläufe, der sich über Sekunden ziehen kann und anschließendes Aufholen der Simulationszeit im Zeitraffer. Manch ein unverdientes Game Over kann daher von einem Gegner verursacht werden, der in der Zeit des Stillstandes Angriffe auf den Spieler im TCP-Puffer ansammelt, auf die der Spieler nicht reagieren kann. Dieser Umstand ist umso mehr Schade, wenn das verzögernde Paket zu dieser Zeit bereits schon, aufgrund von Echtzeitanforderungen, irrelevant ist, bzw. bereits ein aktuelleres im Puffer liegt.\\
-%%TODO cite
+Ein Beispiel der unvorteilhaften Verwendung von TCP im Bereich von Videospielen ist das äußerst erfolgreiche und bekannte Spiel Minecraft von Mojang. Hier äußern sich Netzwerkverzögerungen (Lags) durch einen Stillstand der Spielabläufe, der sich über Sekunden ziehen kann und anschließendes Aufholen der Simulationszeit im Zeitraffer. Manch ein unverdientes Game Over kann daher von einem Gegner verursacht werden, der in der Zeit des Stillstandes Angriffe auf den Spieler im TCP-Puffer ansammelt, auf die der Spieler nicht reagieren kann. Dieser Umstand ist umso mehr Schade, wenn das verzögernde Paket zu dieser Zeit bereits schon, aufgrund von Echtzeitanforderungen, irrelevant ist, bzw. bereits ein aktuelleres im TCP-Puffer liegt.\\
 Die Verwendung von TCP für echtzeitrelevante Information ist daher nur ratsam, wenn die zu übertragende Information die von TCP erhaltenen Eigenschaften von Reihenfolge und Übertragungssicherheit auch tatsächlich fordert. In diesem Fall muss ein Protokoll, welches diese Eigenschaften implementiert nicht im Rahmen von UDP selbst umgesetzt werden.\\
-Durch seine Verbindungsorientiertheit bietet sich TCP ebenfalls für die Verbindungskontrolle an, da der Verbindungsstatus, z.B.~ bei abgebrochenen Verbindungen leicht erkannt werden können. Des weiteren lassen sich auf der Basis einer TCP-Verbindung leicht eigene sequenzielle Protokolle implementieren, z.B. um eine Verbindung zweier Applikationen in der Applikationsschicht herzustellen.
-\item UDP, mit den relevaten Eigenschaften der anforderungslosen Übertragung von Datenpaketen\\
+Durch seine Verbindungsorientiertheit bietet sich TCP ebenfalls für die Verbindungskontrolle an, da der Verbindungsstatus, z.B.~ bei abgebrochenen Verbindungen leicht erkannt werden kann. Des weiteren lassen sich auf der Basis einer TCP-Verbindung leicht eigene sequenzielle Protokolle implementieren, z.B. um eine Verbindung zweier Applikationen in der Applikationsschicht initial herzustellen.
+\item UDP, maximale Größe von Einzelpaketen, sonst keine relevanten Anforderungen\\
 	Im Videospielbereich sehen wir hauptsächlich UDP verwendet, höchstwahrscheinlich
 	da die meisten Informationen im Rahmen der Echtzeitsynchronisation von Videospielen die unter TCP beschriebenen Eigenschaften nicht zwingend fordert.
 \end{enumerate}
@@ -155,51 +139,42 @@ Im Folgenden werden diese Protokolle für hier enthaltenen Verwendungszwecke in 
 
 \subsubsection{Informationsformat}
 
-Es werden prinzipiell zwei grundlegende Formate von Information betrachtet.
+Es werden prinzipiell zwei grundlegende Formate von temporärer Information für ein Übertragungsformat betrachtet.
 \begin{enumerate}
 \item Statusinformation\\
-In der Simulation liegt die Information zu ihren Inhalten in Form von gezeiteten Stati vor, d.h. ein Zustand eines Interesses zu einem bestimmten Zeitpunkt, sei dieser Real- oder Simulationszeit. \\
+In der Simulation liegt die Information zu ihren Inhalten in Form von gezeiteten Stati vor, d.h. ein Zustand eines Simulationsinteresses zu einem bestimmten Zeitpunkt, sei dieser Real- oder Simulationszeit. \\
 So ist ein Projektil z.B.~durch Position und Geschwindigkeit zu einem Simulationszeitpunkt dargestellt, welche nach entsprechenden physikalischen Gesetzen aktualisiert werden kann.\\
 Die wohl interessanteste Eigenschaft von Statusinformation im Rahmen der Synchronisierung ist bei Mitführung des Zeitpunktes der Validität der Information die inhärente Redundanz bei wiederholter Übertragung durch simples überschreiben älterer Stati, welche die Übertragung sehr robust macht.
 Das präferierte Übertragungsprotokoll für diese Art Information ist UDP, da es dessen Eigenschaftsprofil entspricht.
 Wir erkennen jedoch auch, dass das Optimierungspotential von Synchronisationsprotokollen bei der Verwendung von roher Statusinformation beschränkt ist. Bei vielen Entitäten, oder bei komplexen Entitäten wird der benötigte Sendungsumfang unter Umständen zu groß.
 Zum Beispiel werden beim Schießen einer Schrotflinte in der Simulation theoretisch zigfach Projektile frei, welche dann simuliert und synchronisiert werden sollen.
-Unter der Verwendung von Statusinformation zur Synchronisation dieser Projektile steigt die Menge der zur Synchronisation versendeten Daten mindestens linear.\\
+Unter der Verwendung von Statusinformation zur Synchronisation dieser Projektile steigt die Menge der zur Synchronisation versendeten Daten mindestens linear mit der Anzahl der Projektile.\\
 Dieser Umstand kann nur durch eine abstraktere Behandlung von mehreren Projektilen in der Simulation, beispielsweise als Schwarm, oder eine abstraktere Übertragungsmethode abgeschwächt werden.
 \item Aktualisierungsinformation\\
 beschreibt die Änderung eines Zustands zu einem bestimmten Zeitpunkt. Diese umfassen meist codierte Anweisungen oder arithmetische Differenzen, welche auf den Status am Empfänger aufgerechnet werden.\\
-Ein Problem mit Änderungsinformation besteht, wenn diese keine kommutativen und/oder assoziativen Eigenschaften beinhaltet und so sowohl die Übertragungsreihenfolge als auch die Übertragung selbst abgesichert sein muss, um die Äquivalenz des am Empfänger ermittelten Simulationsstatus herzustellen. In diesem Fall ist das präferierte Übertragungsprotokoll TCP, da dieses die so geforderten Eigenschaften mitbringt. Ist die Reihenfolge oder das Fehlen der Information am Empfänger allerdings nicht kritisch kann auch hierfür einfach UDP verwendet werden. Es ist jedoch hier essentiell eine Analyse zu vollziehen, da sonst zu synchronisierende Simulationsstati sich plötlich desynchronisieren können.
-\item Initialisierungsinformation\\
-Beim Verbindungsaufbau müssen ebenfalls schon Informationen ausgetauscht werden. Dabei sind einige Verbindungsorganisatorisch, andere können allerdings auch die Simulation direkt betreffen. 
-Derzeitig fallen nur organisatorische Informationen an, sämtliche die Simulation betreffenden Initialisierungsdaten, sowie Ressourcen, sind an beiden Enden der Verbindung statisch bekannt.
-TCP wird für den initialen Austausch von Informationen zwischen den beteiligten Applikationen verwendet. Zu den Aufgaben hier zählen:
-\begin{itemize}
-\item Filterung von Fremdverbindungen durch eine applikationsspezifische Begrüßung
-\item Identifikation von Servern und Clients (wir verzichten im Rahme dieser Arbeit auf Sicherheitsaspekte, wie z.B. saubere Authentifizierung, etc.)
-\item Die Übermittlung der Adressierung von UDP-Sockeln der jeweiligen Knoten.
-\item Die Übertragung von Synchronisationsinformation, welche nicht dem herkömmlichen Profil von übertragenen Simulationsstati entspricht. Die konkrete Verwendung von TCP in diesem Kontext wird in Abschnitt %%TODO ref
-genauer beschrieben und begründet.
-\end{itemize}
+Ein Problem mit Änderungsinformation besteht, wenn diese keine kommutativen und/oder assoziativen Eigenschaften beinhaltet und so sowohl die Übertragungsreihenfolge als auch die Übertragung selbst abgesichert sein muss, um die Äquivalenz des am Empfänger ermittelten Simulationsstatus sicherzustellen. In diesem Fall ist das präferierte Übertragungsprotokoll TCP, da dieses die so geforderten Eigenschaften mitbringt. Ist die Reihenfolge oder das Fehlen der Information am Empfänger allerdings nicht kritisch kann auch hierfür einfach UDP verwendet werden. Es ist jedoch hier essentiell eine Analyse zu vollziehen, da sonst zu synchronisierende Simulationsstati sich plötzlich und oft sogar unerkannt desynchronisieren können.
+
 \end{enumerate}
 
 \subsubsection{Generelle Präferenz}
+Zur Übertragung von Initialisierungsinformation wird TCP verwendet, da die Erstellung eines sequenziellen Protokolls unter TCP einfacher erscheint und die enthaltene Übertragungssicherheit und Verbindungskontrolle für diesen Zweck ein erheblicher Vorteil ist.
 Die Übertragung von Statusinformation via UDP wird unter den gegebenen Anforderungen auf Grund seiner Robustheit und Einfachheit als präferiert angesehen. Es wird zunächst versucht so viele Features wie möglich über diese Übertragungsstrategie abzubilden.\\
 Die Verwendung von Änderungsinformation wird sich für andere Verwendungszwecke vorbehalten, hauptsächlich, da das Optimierungspotential hier höher scheint.
 
 
 \subsection{Anmerkungen zur übernommenen Codebasis}
 Durch die Hinzunahme von Echtzeitsynchronisationsfähigkeit als Anforderung an die Applikation werden im Design der übernommenen Codebasis schnell Verletzungen des \textit{Separation of Corcerns} Prinzips ersichtlich.\\
-Das Fehlen von Anforderungen hinsichtlich mehrerer Benutzer und Fernsteuerung von Simulationsinhalten erlaubt in der übernommenen Codebasis für kurze Implementierungswege durch viele $1:1$ Beziehungen, welche sich hier weiter als kritisch erweisen. Belange(Concerns) waren über besagte $1:1$ Beziehungen daher oft nicht sauber für den Zweck einer Synchronisation abgegrenzt, Komponenten sind unnötig engmaschig vernetzt. Viele Basisaspekte der Simulationsengine werden daher komplett neu erdacht und designed, was den Hauptanteil der im Projekt aufgebrachten Zeit ausmacht.\\
-Auch viele periphere Features müssen überarbeitet werden, oder es droht der Verlust des Features. Dabei werden oft Neurealisierungen des Features genauso Umfangreich wie seine Entfernung eingeschätzt.
-Die konkreten vollzogenen Änderungen sind oft umfangreich und weitreichend, ihre Begründung allerdings komplex, detailreich und werden daher für diesen Bericht nicht als geeignet oder interessant eingeschätzt.\\
+Das Fehlen von Anforderungen hinsichtlich mehrerer Benutzer und Fernsteuerung von Simulationsinhalten erlaubt in der übernommenen Codebasis für kurze Implementierungswege durch viele $1:1$ Beziehungen, welche sich hier weiter als kritisch erweisen. Belange(Concerns) sind über besagte $1:1$ Beziehungen dabei oft nicht sauber zum Vorteil der Erweiterbarkeit oder Umsetzung einer Synchronisation abgegrenzt. Komponenten sind unnötig engmaschig vernetzt, was Erweiterungen der $1:1$ Beziehungen auf Beziehungen mit mehreren Partnern, z.B. $1:n$, erschwert. 
+Viele Basisaspekte der Simulationsengine werden daher komplett neu erdacht und designed, was den Hauptanteil der im Projekt aufgebrachten Zeit ausmacht.\\
+Auch viele periphere Features werden von diesen Änderungen beeinflusst, oder es droht der Verlust des Features. Dabei werden oft Neurealisierungen des Features genauso Umfangreich wie seine Entfernung eingeschätzt.
+Die konkreten vollzogenen Änderungen sind oft umfangreich und weitreichend, ihre Begründung allerdings komplex, detailreich und werden daher für diesen Bericht nicht als geeignet oder interessant eingeschätzt, zumal sie nichts zur konkreten Umsetzung der Synchronisation beitragen. Die Features stehen dabei der Umsetzung der Synchronisation im Weg, bilden allerdings den Simulationinhalt ab, ohne den eine Synchronisation ebenfalls sinnfrei erscheint, also nicht einfach entfernt werden können.\\
 Wir erfahren so die Grundlegenheit, Kritikalität und Komplexität einer Anforderungsänderung in Punkten Synchronisation.
 Es bestätigt, dass das frühzeitige Miteinbeziehen einer Synchronisations- oder Echtzeitanforderung in Softwareprojekten ratsam ist.
-
 
 \subsection{Applikationsdesign}
 Der Umbau der übernommenen Codebasis erfolgt sukzessiv und iterativ nach Bedarf. 
 So werden die in Abschnitt~\ref{sec:proceedings} beschriebenen Meilensteine abgearbeitet.\\
-Es werden die letztendlichen Ergebnisse des Umbaus der allgemeinen Softwarearchitektur präsentiert, welche alle einbezogenen Aspekte beinhalten:
+Es werden die letztendlichen Ergebnisse des Umbaus der allgemeinen Softwarearchitektur präsentiert, welche alle einbezogenen Aspekte beinhalten.
 
 Im Rahmen des Umbaus werden mehrere für das Design zentrale Abstraktionen angelegt.
 Diese bestehen aus Abstraktionen aus der übernommenen Codebasis, Neukreationen, und Isolationen von Belangen aus bereits bestehenden Abstraktionen. Im Sinn dieses Berichts wird sich in der folgenden Liste auf die relevanten Abstraktionen im Rahmen der Synchronisation beschränkt.
@@ -271,10 +246,10 @@ Als zentrale Organisationsstruktur des Programms ist es die Aufgabe des Applikat
 
 Die Abbildung~\ref{fig:new_architecture} zeigt die neugewonnene Architektur anhand der Abstraktionen und ihrer Abhängigkeiten untereinander.
 
-Die Existenz dieser konkretisierten Abstraktionen erlauben uns nun die Umsetzung benötigter Features, die vorher so nicht möglich waren:
+Die Existenz dieser konkretisierten Abstraktionen erlauben weiter die Umsetzung benötigter Features, die vorher so nicht möglich waren:
 \begin{itemize}
-\item Dislokation eines Benutzers hinter eine Netzwerkverbindung\\
-	Durch die Abstraktion eines Benutzers kann dieser für den kontext einer Lokalen oder Remoteverbindung abstrahiert werden.
+\item Verlagerung eines Benutzers hinter eine Netzwerkverbindung\\
+	Durch die Abstraktion eines Benutzers kann dieser für den Kontext einer Lokalen oder Remoteverbindung abstrahiert werden.
 \item Behandlung mehrerer Benutzer, mehrerer Eingaben\\
 	Vor allem die isolierte Abstraktion der Simulation kann nun auf die Fähigkeit zur Behandlung meherer Benutzer erweitert werden.
 \item Optionalität einer grafischen Ausgabe\\
@@ -286,10 +261,11 @@ Die Unterscheidung der Simulation und der Simulationsinhalte/Entitäten ermögli
 \item Stabiler Applikationsstart unabhängig zu einer Simulation (Öffnen des Fensters, Mausverhalten)\\
 	Durch die Abgrenzung von Belangen vor allem hinsichtlich benötigter Systemressourcen von der Simulationsanwendung ermöglicht benutzerdefinierte Einstellungen der Applikation durch Konfiguration, Eingabeparameter.
 	So können verschiedene Applikationskontexte realisiert werden, z.B.~als Client, als Server, nur Lokal, Fernsteuerung, etc..
-	Des Weiteren kann so einfacher das Laden von benötigten Applikationsressourcen, besonders im grafischen Kontext gesteuert werden.
+	Es so einfacher das Laden von benötigten Applikationsressourcen, besonders im grafischen Kontext gesteuert werden.
+	Weiter ist die Angesprochene benötige Überarbeitung mancher durch die generelle Änderung betroffener Features so nun einfacher zu vollziehen.
 \end{itemize}
 
-Wie diese nun ermöglichten Features im Weiteren zur Umsetzung der Projektziele verwendet werden werden in den folgenden Abschnitten erläutert.
+Wie diese nun ermöglichten Features im Weiteren zur Umsetzung der Projektziele verwendet werden wird in den folgenden Abschnitten erläutert.
 
 \input{remotecontrol.tex}
 
