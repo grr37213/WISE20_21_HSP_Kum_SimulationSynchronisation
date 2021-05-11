@@ -1,20 +1,28 @@
 \section{Volle Synchronisation einer Simulation}
 Das Ziel ist, auf zwei Maschinen/Prozessen jeweils eine Simulation zu haben, welche miteinander in Echtzeit synchronisiert werden.\\
 Zu diesem Zweck wird eine Synchronisation zunächst mit einer Master-Slave-Strategie umgesetzt. Eine Maschine dient dabei als Server, eine als Client.
-Der Server hat die Aufgabe, den Status der Simulation auf eine neue Simulationszeit fortschreiten zu lassen. Ein solcher Simulationsschritt wird Tick genannt (vgl. im Anhang den Abschnitt \ref{sec:tick}). Da die Simulation auf dem Server vollständig ist, kann auch ein lokaler Benutzer sich zur Serversimulation verbinden.\\
-Der Client hat die Aufgabe, vom Server gesendete Aktualisierungen für Simulationsinhalte anzunehmen und zu verarbeiten. Der Client hat unter Umständen nur die für ihn relevanten Simulationsinhalte lokal vorhanden. Der Client führt keine Ticks, d.h.~keine Simulation selbstständig durch. Der Client hat die Möglichkeit in Verbindung mit einem eigenen lokalen Benutzer eine graphische Ausgabe anhand der ihm bekannten Simulationsinhalte zu generieren. 
-
-\subsection{Server-Client Netzwerk}
-Für die volle Synchronisation sollen die Vorteile beider Netzwerkprotokolle TCP und UDP ausgenutzt werden. Der Server hält zu allen Clients je eine offene TCP-Verbindung. Das ist zudem praktisch, da die Verbindungsorientierung von TCP sich so auf die Verbindung zwischen Server und Client für unsere Zwecke überträgt: Bricht die Verbindung ab, so kann dies über Fehlerzustände oder die geschlossene Verbindung am TCP-Socket festgestellt werden.
-Es wird ein Initiierungsprotokoll für eine Verbindung über TCP abgehandelt, welche Informationen zu Server, bzw. Client initial austauscht. Darin enthalten sind entsprechende UDP-Ports von Server und Client, welche im folgenden für UDP-Kommunikation verwendet werden können.\\
+Der Server hat die Aufgabe, den Status der Simulation auf eine neue Simulationszeit fortschreiten zu lassen. Ein solcher Simulationsschritt wird Tick genannt (vgl. im Anhang den Abschnitt \ref{sec:tick}). Die Instanz der Simulation auf dem Server ist immer vollständig, d.h.~sämtliche Simulationsinhalte sind auf dem Server immer präsent. Ein lokaler Benutzer kann sich an der Servermaschine direkt zur Simulation verbinden und hat sämtliche benötigten Informationen sofort parat.\\
+Ein Client dagegen ist meist nicht vollständig. Der Client hat die Aufgabe, vom Server gesendete Aktualisierungen für Simulationsinhalte anzunehmen und zu verarbeiten. Der Client hat unter Umständen nur die für ihn relevanten Simulationsinhalte lokal vorhanden. Der Client führt keine Ticks, d.h.~keine Simulation selbstständig durch. Der Client hat die Möglichkeit in Verbindung mit einem eigenen lokalen Benutzer eine graphische Ausgabe anhand der ihm bekannten Simulationsinhalte zu generieren und über einen Kontrollstatus Eingaben an eine Remote-Simulation zu liefern. 
 
 \subsection{Client-Eingaben}
-Dem Client ist es unter der veranschlagen Master-Slave-Architektur nicht erlaubt, irgendwelche Simulationsinhalte zu schreiben. Ein Benutzer soll also nicht einmal seine eigene Figur (Userentität) selbst bewegen.\\
-Es scheint praktisch, die in der Fernsteuerung umgesetzten Eingabemethoden wiederzuverwenden. Die Methode ist bereits Bandbreiten optimiert, die zu übertragene Information ist bereits auf essentielle Use-Cases reduziert. Die Semantik eines Statussets als Bedienerintention scheint richtig: Der Client hat als Slave keine kontrollierenden Rechte gegenüber Inhalte der Simulation und kann über das Statusset nur Vorschläge liefern, welche die Simulation auf dem Server zu ihrer Diskretion einbeziehen kann.
+Dem Client ist es unter Master-Slave-Architektur nicht erlaubt, irgendwelche Simulationsinhalte direkt zu schreiben. Ein Benutzer soll also nicht einmal seine eigene Figur (Userentität) im simulierten Raum selbst bewegen.\\
+Es scheint praktisch, die in der Fernsteuerung umgesetzten Eingabemethoden wiederzuverwenden. Die Methode ist bereits optimiert in Aspekten der Bandbreite, die zu übertragene Information ist bereits auf essentielle Use-Cases für die Steuerung einer Figur reduziert. Die Semantik eines Statussets als Bedienerintention scheint richtig: Der Client hat als Slave keine kontrollierenden Rechte gegenüber Inhalte der Simulation und kann über das Statusset nur Vorschläge liefern, welche die Simulation auf dem Server zu ihrer Diskretion interpretieren kann.
 
 \subsection{Zeitsynchronisation}
 
+%old start
 Will man eine Simulation zwischen 2 Rechnern synchronisieren, muss die Zeit zwischen beiden synchronisiert werden. Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Zeit vorgibt, und die Clients möglichst genau versuchen, sich daran anzupassen. Bei der Zeitsynchronisation mit dem Server wird die Latenz gemessen, aber immer nur in beiden Richtungen zusammen, da die einzelne Signallaufzeit ohne vorher synchrone Uhren nicht ermittelt werden kann. In der Realität kann die einzelne Signallaufzeit abgeschätzt werden, indem die 2-Wege-Laufzeit halbiert wird.
+%old end
+%new start
+Bei Synchronisationsvorgängen von gezeiteten Simulationsinhalten ist eine gemeinsame Zeitbasis sinnvoll.
+Auf verschiedenen Rechenmaschinen liegen jedoch unterschiedliche Uhren vor, welche sich
+in durch den Einfluss der Hardware oder des Betriebssystems in Epoche und Clockrate unterscheiden können. Typische Symptome sind Drift und Jitter bei Uhren auf verschiedenen Systemen.
+Eine Synchronisation der Zeitbasen selbst bedeutet regelmäßig die Uhren zu stellen und die Umrechnung
+unterschiedlicher Uhrenarten oder Zeitformaten bereitzustellen.\\
+Zunächst wird eine minimale Genauigkeit der Zeitabtastung in Mikrosekunden auf allen verwendeten Maschinen versichert.\\
+Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Zeit vorgibt, und die Clients möglichst genau versuchen, sich daran anzupassen. Bei der Zeitsynchronisation mit dem Server wird die Latenz gemessen, aber immer nur in beiden Richtungen zusammen, da die einzelne Signallaufzeit ohne vorher synchrone Uhren nicht ermittelt werden kann. In der Realität kann die einzelne Signallaufzeit abgeschätzt werden, indem die 2-Wege-Laufzeit halbiert wird.
+%new end
+%TODO evaluate previous merge conflict, after getting some sleep
 \begin{figure}
     \centering
     \includegraphics[width=0.75\textwidth]{./Zeichnung1a.png}
@@ -38,6 +46,7 @@ Die offensichtlichste Variante der Uhreneinstellung am Client ist, möglichst Gl
     \label{fig:zeichnung2a}
 \end{figure}
 Eine weitere Möglichkeit, Uhren am Client einzustellen, ist die Uhr um die Latenzzeit zum Server (ohne Rückweg) in die Zukunft zu stellen (siehe Abb. ~\ref{fig:zeichnung2a}). In diesem Fall kann der Server die Aktionen vom Client als aktuell betrachten und muss sie nicht retroaktiv anwenden. Der Schuss zu Zeitpunkt 3 ist also zu Zeitpunkt 3 am Server vorhanden, sodass er diesen wie lokale Eingaben in der Gegenwart verarbeiten kann. Speicherung alter Zustände oder wiederholtes Berechnen des selben Zeitpunktes sind nicht mehr nötig. Aus diesen Gründen wurde dieses Modell gewählt. Der Server behandelt alle eingehenden Pakete mit Aktionen vom Client als in der Gegenwart auftretend.
+
 Für den Client ändert sich gegenüber dem anderen Ansatz nichts. Er hat weiterhin veraltete Informationen, die in der Zeit vorwärts berechnet werden müssen. Lediglich die Größe der Zeitdifferenz ändert sich. Als Methode zum Ausgleich dieser wurde die o.g. Methode 2 verwendet (rein grafische Extrapolation).
 \begin{figure}
     \centering
