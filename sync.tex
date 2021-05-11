@@ -26,7 +26,7 @@ Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Zeit vor
 \begin{figure}
     \centering
     \includegraphics[width=0.75\textwidth]{./Zeichnung1a.png}
-    \caption{TODO}
+    \caption{Diagramm über Beispielsituation für Uhren, die gleichzeitig eingestellt sind. Gleiche Höhe entspricht Gleichzeitigkeit der echten Zeit. Dargestellt sind außerdem Beispielpakete mit Inhalt und Absendezeitpunkt in Simulationszeit.}
     \label{fig:zeichnung1a}
 \end{figure}
 Die offensichtlichste Variante der Uhreneinstellung am Client ist, möglichst Gleichzeitigkeit mit der Serveruhr anzustreben. Die hätte allerdings Implikationen für die Implementierung, wie in Abb. ~\ref{fig:zeichnung1a} ersichtlich. Aktionen, die vom Client ausgelöst werden, kommen erst verspätet am Server an, sodass dieser für eine korrekte zeitliche Einordnung dieser Aktion diese retroaktiv angewendet werden muss. Der Server müsste also, bevor die Aktion in die Simulation integriert wird, die Auswirkungen dieser in die (von der Aktion aus gesehenen) Zukunft rechnen (im Beispiel von Zeitschritt 0 nach Zeitschritt 3), dazu werden aber wahrscheinlich Daten über den Simulationszustand zum Zeitpunkt 0 benötigt. Dann muss im schlimmsten Fall die gesamte Simulation wiederholt werden, um einen korrekten Zustand zu Zeitpunkt 3 herzustellen. Dies benötigt Speicher, für die Speicherung alter Simulationszustände, und Rechenleistung zur Wiederholten Neuberechnung von schon behandelten Simulationszeitpunkten. Den zweiten Teil der Arbeit hat der Client. Er erhält die Simulation zum Zeitpunkt 3 und muss daraus ein Bild für den Benutzer generieren, das den Zeitpunkt 6 darstellt. Dies kann auf 2 Arten erreicht werden.
@@ -42,7 +42,7 @@ Die offensichtlichste Variante der Uhreneinstellung am Client ist, möglichst Gl
 \begin{figure}
     \centering
     \includegraphics[width=0.75\textwidth]{./Zeichnung2a.png}
-    \caption{TODO}
+    \caption{Diagramm über Beispielsituation für Simulationszeit-Uhren, die zeitversetzt so eingestellt sind, dass der Client um die Latenz Client-zu-Server vorwärts zeitversetzt ist. Gleiche Höhe entspricht Gleichzeitigkeit der echten Zeit. Dargestellt sind außerdem Beispielpakete mit Inhalt und Absendezeitpunkt in Simulationszeit.}
     \label{fig:zeichnung2a}
 \end{figure}
 Eine weitere Möglichkeit, Uhren am Client einzustellen, ist die Uhr um die Latenzzeit zum Server (ohne Rückweg) in die Zukunft zu stellen (siehe Abb. ~\ref{fig:zeichnung2a}). In diesem Fall kann der Server die Aktionen vom Client als aktuell betrachten und muss sie nicht retroaktiv anwenden. Der Schuss zu Zeitpunkt 3 ist also zu Zeitpunkt 3 am Server vorhanden, sodass er diesen wie lokale Eingaben in der Gegenwart verarbeiten kann. Speicherung alter Zustände oder wiederholtes Berechnen des selben Zeitpunktes sind nicht mehr nötig. Aus diesen Gründen wurde dieses Modell gewählt. Der Server behandelt alle eingehenden Pakete mit Aktionen vom Client als in der Gegenwart auftretend.
@@ -51,7 +51,7 @@ Für den Client ändert sich gegenüber dem anderen Ansatz nichts. Er hat weiter
 \begin{figure}
     \centering
     \includegraphics[width=0.85\textwidth]{./Gegnerposition1a.png}
-    \caption{TODO}
+    \caption{Diagramm über eine Beispielsituation, in der ein Spieler auf einen Gegner schießt. Der Ort im Diagramm entspricht größtenteils Maßstabsgetreu der Position in der Simulation (für Gegner, Spieler und Schüsse). Die einfachen Pfeile stellen Schüsse des Spielers dar.}
     \label{fig:gegnerposition1a}
 \end{figure}
 Der Grund dass diese Extrapolation überhaupt notwendig ist, zeigt Abb. ~\ref{fig:gegnerposition1a}. Die Berechnungslatenz und die Paketlatenz werden in der Implementierung (und in den Abbildungen) nur gemeinsam, als Gesamtlatenz verwendet. Zu sehen ist, dass wenn der Spieler auf die letzte bestätigte Position schießt, der Gegner sich zu einer neuen Position bewegt, bis die Informationen über den Schuss am Server ankommen. Der Schuss würde verfehlen. Die Aufgabe der grafischen Extrapolation ist es also, den Gegner an dem Ort anzuzeigen, wo er wahrscheinlich sein wird, wenn die Informationen über den aktuellen Client-Zustand in der Server-Simulation ankommen. Der Spieler kann dann wie lokal gewohnt auf bewegliche Ziele schießen, ohne die Latenz zum Server miteinbeziehen zu müssen.
@@ -62,7 +62,7 @@ Um die Daten für die in TODO ref beschribene Extrapolation möglichst genau zu 
 \begin{figure}
     \centering
     \includegraphics[width=0.75\textwidth]{./Zeichnung3a.png}
-    \caption{TODO}
+    \caption{Diagramm über Beispielsituation bei Simulationszeit-Uhrensynchronisation, mit Zeitversetzten Uhren wie in Abb. ~\ref{fig:zeichnung2a}. Gleiche Höhe entspricht Gleichzeitigkeit der echten Zeit. Dargestellt ist außerdem, wie der Client aus den Daten in den Synchronisierungspaketen diejenige Simulationszeit abschätzt, die dem Eintreffen (am Server) und Verarbeiten eines hypothetischen Pakets entspricht, wenn es sofort abgesendet werden würde.}
     \label{fig:zeichnung3a}
 \end{figure}
 
