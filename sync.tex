@@ -10,19 +10,18 @@ Es scheint praktisch, die in der Fernsteuerung umgesetzten Eingabemethoden wiede
 
 \subsection{Zeitsynchronisation}
 
-%old start
-Will man eine Simulation zwischen 2 Rechnern synchronisieren, muss die Zeit zwischen beiden synchronisiert werden. Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Zeit vorgibt, und die Clients möglichst genau versuchen, sich daran anzupassen. Bei der Zeitsynchronisation mit dem Server wird die Latenz gemessen, aber immer nur in beiden Richtungen zusammen, da die einzelne Signallaufzeit ohne vorher synchrone Uhren nicht ermittelt werden kann. In der Realität kann die einzelne Signallaufzeit abgeschätzt werden, indem die 2-Wege-Laufzeit halbiert wird.
-%old end
-%new start
 Bei Synchronisationsvorgängen von gezeiteten Simulationsinhalten ist eine gemeinsame Zeitbasis sinnvoll.
 Auf verschiedenen Rechenmaschinen liegen jedoch unterschiedliche Uhren vor, welche sich
 in durch den Einfluss der Hardware oder des Betriebssystems in Epoche und Clockrate unterscheiden können. Typische Symptome sind Drift und Jitter bei Uhren auf verschiedenen Systemen.
 Eine Synchronisation der Zeitbasen selbst bedeutet regelmäßig die Uhren zu stellen und die Umrechnung
 unterschiedlicher Uhrenarten oder Zeitformaten bereitzustellen.\\
 Zunächst wird eine minimale Genauigkeit der Zeitabtastung in Mikrosekunden auf allen verwendeten Maschinen versichert.\\
-Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Zeit vorgibt, und die Clients möglichst genau versuchen, sich daran anzupassen. Bei der Zeitsynchronisation mit dem Server wird die Latenz gemessen, aber immer nur in beiden Richtungen zusammen, da die einzelne Signallaufzeit ohne vorher synchrone Uhren nicht ermittelt werden kann. In der Realität kann die einzelne Signallaufzeit abgeschätzt werden, indem die 2-Wege-Laufzeit halbiert wird.
-%new end
-%TODO evaluate previous merge conflict, after getting some sleep
+Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Zeit vorgibt, d.h.~es ist die Aufgabe der Clients ihre Uhren einzustellen. 
+Bei der Zeitsynchronisation mit dem Server wird die Latenz beidseitig gemessen.
+Dies muss hier in beiden Richtungen geschehen immer, da die einzelnen Signallaufzeiten ohne vorher synchrone Uhren nicht auf der selben Zeitbasis existieren und so nicht vergleichbar ermittelt werden können. 
+Die einzelne Signallaufzeit kann abgeschätzt werden, indem die 2-Wege-Laufzeit halbiert wird. Dazu werden zu jedem UDP-Paket, welche eine frequente Kommunikation umsetzen, zwei Zeitstempel versendet, wobei einer die aktuelle Serverzeit und der andere die aktuelle Clientzeit beinhält.
+So legt ein Zeitstempel jeweils Hin- und Rückrichtung zurück und die Zwei-Wege-Laufzeit kann anhand der Stempel in empfangenen Paketen an beiden Knoten ermittelt werden.
+
 \begin{figure}
     \centering
     \includegraphics[width=0.75\textwidth]{./Zeichnung1a.png}
