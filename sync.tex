@@ -15,12 +15,13 @@ Bei Synchronisationsvorgängen von gezeiteten Simulationsinhalten ist eine gemei
 Auf verschiedenen Rechenmaschinen liegen jedoch unterschiedliche Uhren vor, welche sich in durch den Einfluss der Hardware oder des Betriebssystems in Epoche und Clockrate unterscheiden können. Typische Symptome sind Drift und Jitter bei Uhren auf verschiedenen Systemen.
 Eine Synchronisation der Zeitbasen selbst bedeutet regelmäßig die Uhren zu stellen und die Umrechnung
 unterschiedlicher Uhrenarten oder Zeitformaten bereitzustellen.\\
-Zunächst wird eine minimale Genauigkeit der Zeitabtastung in Mikrosekunden auf allen verwendeten Maschinen versichert.\\
-Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Zeit vorgibt, d.h.~es ist die Aufgabe der Clients ihre Uhren einzustellen. 
-Bei der Zeitsynchronisation mit dem Server wird die Latenz beidseitig gemessen.
-Dies muss hier in beiden Richtungen geschehen immer, da die einzelnen Signallaufzeiten ohne vorher synchrone Uhren nicht auf der selben Zeitbasis existieren und so nicht vergleichbar ermittelt werden können. 
+Zunächst wird eine minimale Genauigkeit der Zeitabtastung in Mikrosekunden auf allen verwendeten Maschinen versichert . Zudem gilt die Unterscheidung der messbare Zeitbasen einer Realzeit und der relativ dazu laufenden Simulationszeit (vgl. Appendix \ref{sec:time}).\\
+Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Simulationszeit vorgibt, d.h.~es ist die Aufgabe der Clients ihre Simulationszeituhren einzustellen. 
+Bei der Zeitsynchronisation mit dem Server wird die Latenz der Realzeit beidseitig gemessen.
+Dies muss hier in beiden Richtungen geschehen, da die einzelnen Signallaufzeiten ohne vorher synchrone Uhren nicht auf der selben Realzeitbasis existieren und Zeiten sonst nicht vergleichbar ermittelt werden können. 
 Die einzelne Signallaufzeit kann abgeschätzt werden, indem die 2-Wege-Laufzeit halbiert wird. Dazu werden zu jedem UDP-Paket, welche eine frequente Kommunikation umsetzen, zwei Zeitstempel versendet, wobei einer die aktuelle Serverzeit und der andere die aktuelle Clientzeit beinhält.
 So legt ein Zeitstempel jeweils Hin- und Rückrichtung zurück und die Zwei-Wege-Laufzeit kann anhand der Stempel in empfangenen Paketen an beiden Knoten ermittelt werden.\\
+Prinzipiell ist zum alleinigen Zweck der Synchronisation der Simulation auch nur die Synchronisation der Simulationszeituhren vonnöten.
 
 \begin{figure}
     \centering
@@ -28,7 +29,8 @@ So legt ein Zeitstempel jeweils Hin- und Rückrichtung zurück und die Zwei-Wege
     \caption{Diagramm über Beispielsituation für Uhren, die gleichzeitig eingestellt sind. Gleiche Höhe entspricht Gleichzeitigkeit der echten Zeit. Dargestellt sind außerdem Beispielpakete mit Inhalt und Absendezeitpunkt in Simulationszeit.}
     \label{fig:zeichnung1a}
 \end{figure}
-Die offensichtlichste Variante der Uhreneinstellung am Client ist, möglichst Gleichzeitigkeit mit der Serveruhr anzustreben. Die hätte allerdings Implikationen für die Implementierung, wie in Abb.~\ref{fig:zeichnung1a} ersichtlich. 
+
+Die offensichtlichste Variante der Einstellung der Simulationszeituhr am Client ist, möglichst Gleichzeitigkeit mit der Serveruhr anzustreben. Diese hätte allerdings Implikationen für die Implementierung, wie in Abb.~\ref{fig:zeichnung1a} ersichtlich. 
 Aktionen, die vom Client ausgelöst werden, kommen erst verspätet am Server an.
 Dieser müsste die so erhaltene Information retroaktiv anwenden, um die Richtigkeit aus der Sicht des Clients herzustellen.
 Dann muss im schlimmsten Fall die gesamte Simulation wiederholt werden (von 0 bis 3), um einen korrekten Zustand zu Zeitpunkt 3 herzustellen. Dies benötigt Speicher, für die Speicherung alter Simulationszustände, und Rechenleistung zur wiederholten Neuberechnung von schon behandelten Simulationszeitpunkten. Den zweiten Teil der Arbeit hat der Client. Er erhält die Simulation zum Zeitpunkt 3 und muss daraus ein Bild für den Benutzer generieren, das den Zeitpunkt 6 darstellt. Dies kann auf 2 Arten erreicht werden.
@@ -37,7 +39,7 @@ Dann muss im schlimmsten Fall die gesamte Simulation wiederholt werden (von 0 bi
 \begin{itemize}
  \item ein höherer Berechnungsaufwand, da die Simulation nun nicht nur am Server, sondern auch am Client stattfinden muss. 
  \item Der Server muss nicht nur Informationen, die die Anzeige am Bildschirm betreffen, versenden, sondern auch Werte, die nur für den Simulationsschritt wichtig sind.
- \item Wenn am Server etwas passiert, von dem der Client noch keine Informationen hat (z.B. Aktion eines anderen Spielers, die noch nicht angekommen ist), ist der Zustand der Simulation am Client nicht mehr valide. Der Client müsste dann also entweder alte Simulationszustände speichern und eine Neuberechnung durchführen, oder er lässt sich vom Server die komplette Simulation erneut zusenden.
+ \item Wenn am Server etwas passiert, von dem der Client noch keine Informationen hat (z.B. Aktion eines anderen Spielers, die noch nicht angekommen ist), ist der Zustand der Simulation am Client nicht mehr valide. Der Client müsste dann also entweder alte Simulationszustände speichern und eine Neuberechnung durchführen, oder er ließe sich vom Server die komplette Simulation erneut zusenden.
 \end{itemize}
 \item Der Client rechnet die Anzeige auf unverbindliche Art und Weise nach vorne. Es wird hierbei dieselbe Extrapolation verwendet, die das Grafikmodul verwenden kann, um zwischen wenigen Simulationsschritten viele Bilder am Bildschirm zu erzeugen. Dazu werden vereinfachte Annahmen getroffen, wie z.B.~ dass Objekte sich linear bewegen, anhand der letzten bestätigten Position und letzten bestätigten Geschwindigkeit. Die resultierende Anzeigeposition wird nicht gespeichert, sondern nur zur momentanen Anzeige verwendet.
 Vorteile sind die einfachere Berechnung und geringere benötigte Bandbreite vom Server. Außerdem hängt die benötigte Rechenzeit nicht davon ab, wie weit der letzte bestätigte Zeitpunkt zurückliegt. 
@@ -50,7 +52,7 @@ In der Praxis ist dies in den meisten Fällen aber nicht sehr kritisch, da inner
     \caption{Diagramm über Beispielsituation für Simulationszeit-Uhren, die zeitversetzt so eingestellt sind, dass der Client um die Latenz Client-zu-Server vorwärts zeitversetzt ist. Gleiche Höhe entspricht Gleichzeitigkeit der echten Zeit. Dargestellt sind außerdem Beispielpakete mit Inhalt und Absendezeitpunkt in Simulationszeit.}
     \label{fig:zeichnung2a}
 \end{figure}
-Eine weitere Möglichkeit, Uhren am Client einzustellen, ist die Uhr um die Latenzzeit zum Server (ohne Rückweg) in die Zukunft zu stellen (siehe Abb. ~\ref{fig:zeichnung2a}). In diesem Fall kann der Server die Aktionen vom Client als gegenwärtig betrachten und es müssen so keine retroaktiven Berechnungen durchgeführt werden.\\
+Eine weitere Möglichkeit, Uhren am Client einzustellen, ist die Uhr um die Einweg-Latenzzeit zum Server in die Zukunft zu stellen (siehe Abb. ~\ref{fig:zeichnung2a}). In diesem Fall kann der Server die Aktionen vom Client als gegenwärtig betrachten und es müssen so keine retroaktiven Berechnungen durchgeführt werden.\\
 Als Beispiel in der Abbildung dient der Schuss eines Projektils.
 Der Schuss zum Zeitpunkt 3 des Clients ist also zu Zeitpunkt 3 am Server vorhanden, sodass er diesen wie eine lokale Eingabe in der Gegenwart verarbeiten kann. Speicherung alter Zustände oder wiederholtes Berechnen des selben Zeitpunktes sind nicht mehr nötig.
 Aus diesen Gründen wurde dieses Modell gewählt. Der Server behandelt alle eingehenden Pakete mit Aktionen vom Client als in der Gegenwart auftretend.
