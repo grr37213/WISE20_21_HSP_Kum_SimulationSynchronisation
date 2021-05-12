@@ -192,7 +192,7 @@ Eine spezielle Entität, welche als Avatar für den Benutzer in der simulierten 
 Enthält Zugriff und Schnittstellen zu Ressourcen des Betriebssystems, dem Fenster, Ereignisquelle, Lautsprecher, etc.
 \item Ereignisverarbeitung\\
 Über Bibliotheken werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse(eng. \textit{events}) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
-Weiter sollen natürlich Eingaben für die Verwendung als Steuerung der Simulation verwendet werden. Die Ereignisverarbeitung beschreibt dabei ein System, welches die Eingaben in einen von der Simulation,bzw.~von Benutzerentitäten interpretierbaren Status umwandelt.
+Weiter sollen natürlich Eingaben für die Verwendung als Steuerung der Simulation verwendet werden. Die Ereignisverarbeitung beschreibt dabei ein System, welches die Eingaben in einen von der Simulation, bzw.~von Benutzerentitäten interpretierbaren Status umwandelt.
 \item 3D Renderer der Simulation\\
 Die Aufgabe des Renderers ist es, ein Bild des simulierten Raums aus einer bestimmte Perspektive zu erstellen und auf ein Fenster des Betriebssystems zu übertragen.
 Ein Renderer greift lesend in viele Aspekte der Simulation ein, um die Informationen für seine Aufgabe zu erhalten.
