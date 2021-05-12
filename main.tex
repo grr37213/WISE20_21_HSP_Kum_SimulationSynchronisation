@@ -144,7 +144,7 @@ Es werden prinzipiell zwei grundlegende Formate von temporärer Information für
 \item Statusinformation\\
 In der Simulation liegt die Information zu ihren Inhalten in Form von gezeiteten Stati vor, d.h. ein Zustand eines Simulationsinteresses zu einem bestimmten Zeitpunkt, sei dieser Real- oder Simulationszeit. \\
 So ist ein Projektil z.B.~durch Position und Geschwindigkeit zu einem Simulationszeitpunkt dargestellt, welche nach entsprechenden physikalischen Gesetzen aktualisiert werden kann.\\
-Die wohl interessanteste Eigenschaft von Statusinformation im Rahmen der Synchronisierung ist bei Mitführung des Zeitpunktes der Validität der Information die inhärente Redundanz bei wiederholter Übertragung durch simples überschreiben älterer Stati, welche die Übertragung sehr robust macht.
+Die wohl interessanteste Eigenschaft von Statusinformation im Rahmen der Synchronisierung ist bei Mitführung des Zeitpunktes der Validität der Information die inhärente Redundanz bei wiederholter Übertragung durch simples Überschreiben älterer Stati, welche die Übertragung sehr robust macht.
 Das präferierte Übertragungsprotokoll für diese Art Information ist UDP, da es dessen Eigenschaftsprofil entspricht.
 Wir erkennen jedoch auch, dass das Optimierungspotential von Synchronisationsprotokollen bei der Verwendung von roher Statusinformation beschränkt ist. Bei vielen Entitäten, oder bei komplexen Entitäten wird der benötigte Sendungsumfang unter Umständen zu groß.
 Zum Beispiel werden beim Schießen einer Schrotflinte in der Simulation theoretisch zigfach Projektile frei, welche dann simuliert und synchronisiert werden sollen.
