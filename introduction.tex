@@ -10,7 +10,7 @@ Die Synchronisation der Simulationszustände beinhaltet demnach die rechtzeitige
 Nach dieser Definition oder nach dessen Teilen, finden wir Echtzeitsynchronisation in industriellen Anwendungen wieder. Zum Beispiel kann im Bereich der Robotik der rechtzeitige Informationsfluss zwischen Steuergeräten und Sensoren als Echtzeitsynchronisation angesehen werden.
 %%TODO cite example
 Das wohl ähnlichste Anwendungsbeispiel im Kontext dieser Arbeit lässt sich im Bereich der Videospiele, oder Bedienersimulationen finden, wo ein echtzeitsynchronisierter Simulationsstatus auf mehreren Maschinen lokal angezeigt werden muss, Bediener jedoch auch selbst Einfluss auf die Simulationsinhalte nehmen können.\\
-In diesem Projekt wird auf einer bestehenden Codebasis einer Simulation, welche nicht unter Einbezug von Synchronisationsgedanken entwickelt wurde, eine solche umgesetzt. Dabei soll eine Echtzeitsynchronisation erreicht zwischen mehreren Rechenmaschinen über eine herkömmliche Internetverbindung (z.B. DSL 16000) werden.
+In diesem Projekt wird auf einer bestehenden Codebasis einer Simulation, welche nicht unter Einbezug von Synchronisationsgedanken entwickelt wurde, eine solche umgesetzt. Dabei soll eine Echtzeitsynchronisation zwischen mehreren Rechenmaschinen über eine Internetverbindung mit 100\,KByte/s Bandbreite erreicht werden.
 Das letztendliche Ziel ist die möglichst unmerkliche Synchronisierung zweier Simulationszustände und deren Anzeige, d.h. die Reduzierung von Seiteneffekten durch Latenz.\\
 Im Laufe der Arbeit werden Kernaspekte zur Synchronisation, aber auch zum benötigten Softwaredesign ermittelt, um synchrone Applikationen umzusetzen. Durch den Status-Quo der übernommenen Codebasis werden durch die Überarbeitung dort gemachte Fehler in diesen Aspekten erkenntlich.
 
@@ -25,14 +25,14 @@ Die verwendete Simulationsanwendung ist ein rudimentäres 3D-Shooter-Videospiel.
 \end{itemize}
 
 Die Simulation von Simulationsinhalten erfolgt in Schritten, in denen ein Inhalt von einem bestehenden Zustand auf einen Zustand zu fortgeschrittener Simulationszeit verändert wird. Ein solcher Zeitschritt wird als Tick bezeichnet (siehe Appendix \ref{sec:tick} oder vgl. Quelle \ref{tick}).\\
-Die Anzeige der Simulation erfolgt durch Inter-/Extrapolation der bekannten Zustände von Simulationsinhalten zu einem bestimmten Simulationszeitpunkt. Die Anzeige führt dabei keine Änderungen auf den Simulationsinhalten durch. Wir bezeichnen den Prozess sowie sein Ergebnis als Frame (vgl. Appendix \ref{sec:tick}).
+Die Anzeige der Simulation erfolgt durch Extrapolation des letzten bekannten Zustands der Simulationsinhalte. Die Anzeige führt dabei keine Änderungen auf den Simulationsinhalten durch. Wir bezeichnen den Prozess sowie sein Ergebnis als Frame (vgl. Appendix \ref{sec:tick}).
 Die Framerate kann ungleich der Tickrate sein, um unabhängig von den Fähigkeiten des Anzeigesystems eine flüssiges Bild zu generieren. Da in einem Frame keine Simulationsinhalte geändert werden, sind die Simulationinhalte komplett unabhängig zur Anzeige.\\
 
 In vielen kommerziellen Produkten in der Videospielbranche wird diese Trennung nicht sauber vollzogen.\\
 Es folgen Inkonsistenzen in der Simulation in Abhängigkeit der Framerate.
 (Beispiel in \glqq The Elder Scrolls V: Skyrim\grqq falsche physikalische Berechnungen auf Grund zu hoher Frameraten lernen Mammuts das Fliegen \cite{flying-fucking-mammoths})
 Es existiert dort dann meist eine maximale Framerate.
-Dieser Umstand scheint die Problematik mitzuführen, dass viele Videospielehersteller, vor allem im Konsolenbereich, Frameraten immer weiter nach unten limitieren, um ihre Produkte umzusetzen, was die Qualität erheblich senkt (Beispiele \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
+Dieser Umstand scheint die Problematik mitzuführen, dass viele Videospielhersteller, vor allem im Konsolenbereich, Frameraten immer weiter nach unten limitieren, um ihre Produkte umzusetzen, was die Qualität erheblich senkt (Beispiele \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
 (entgegen der Meinung ihrer Marketingabteilungen, mit einer Menge negativer Presse, Beispiele \cites{morecinematic00, morecinematic01}
 ) und dazu führt dass Benutzer ihre u.U.~teure, fähige Hardware nicht ausnutzen können und sich mit schlechter Bildqualität zufrieden geben müssen.\\
 Ein Umstand, der oft auf umständlichem Weg durch fähige Konsumenten selbstständig gelöst wird (vgl. \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
