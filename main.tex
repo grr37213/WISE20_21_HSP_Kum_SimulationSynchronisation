@@ -1,5 +1,9 @@
 \documentclass[11pt,twoside,a4paper]{article}
 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[german]{babel}
+
 \usepackage{a4wide,amsmath,amssymb}
 \usepackage[school, simplified]{pgf-umlcd}
 \usetikzlibrary{calc}
@@ -7,10 +11,11 @@
 
 % Mann will direkt Umlaute eingeben können statt \"a, \"o, \"u usw.
 % Entweder:
-\usepackage[utf8]{inputenc}
+
+
 % oder:
 %\usepackage{umlaut}
-\usepackage[german]{babel}
+
 
 \usepackage[style=numeric]{biblatex}
 \addbibresource{grr.bib}
@@ -33,7 +38,7 @@
 
 %\hyphenation{min-des-tens}
 %\hyphenation{Kol-li-sions-er-ken-nung}
-
+\hyphenation{Ü-ber-tra-gungs-reih-en-folge}
 
 %-------------------------- Formatsachen --------------------------%
 
@@ -112,7 +117,7 @@ Zu den Aufgaben hier zählen:
 \begin{itemize}
 \item Filterung von Fremdverbindungen durch eine Begrüßung spezifisch zur Applikation
 \item Identifikation von Servern und Clients (wir verzichten im Rahme dieser Arbeit auf Sicherheitsaspekte, wie z.B. saubere Authentifizierung, etc.)
-\item Die Übermittlung der Adressierung von UDP-Sockeln der jeweiligen Knoten.
+\item Die Übermittlung der Adressierung von UDP-Socket der jeweiligen Knoten.
 \end{itemize}
 \item Echtzeitinformation\\
 Information die sich ändert, insbesondere wenn die Änderung frequent ist.
@@ -124,15 +129,16 @@ Außerdem kann für bestimmte Zwecke berechenbarer oder statischer Determinismus
 \subsubsection{Transportschicht}
 Es stehen zwei Protokolle der ISO-OSI Transportschicht zur Verfügung:
 \begin{enumerate}
-\item TCP, mit den relevanten Eigenschaften der Verbindungsorientiertheit, Erhaltung der Reihenfolge und Übertragungsversicherung als Abstraktion einer Stream-Datenstruktur\\
+\item TCP\\
+Relevante. Eigenschaften: Verbindungsorientiertheit, Erhaltung der Reihenfolge und Übertragungsversicherung als Abstraktion einer Stream-Datenstruktur.\\
 	Die Eigenschaften von TCP beinhalten für Echtzeitanwendungen jedoch gefährliche vorhersehbare Nachteile:\\
 	Bei spontanem Paketverlust fallen Wartezeiten durch Sendewiederholung an, welche weiteren Informationserhalt über den TCP-Socket blockiert.\\
 Ein Beispiel der unvorteilhaften Verwendung von TCP im Bereich von Videospielen ist das äußerst erfolgreiche und bekannte Spiel Minecraft von Mojang. Hier äußern sich Netzwerkverzögerungen (Lags) durch einen Stillstand der Spielabläufe, der sich über Sekunden ziehen kann und anschließendes Aufholen der Simulationszeit im Zeitraffer. Manch ein unverdientes Game Over kann daher von einem Gegner verursacht werden, der in der Zeit des Stillstandes Angriffe auf den Spieler im TCP-Puffer ansammelt, auf die der Spieler nicht reagieren kann. Dieser Umstand ist umso mehr Schade, wenn das verzögernde Paket zu dieser Zeit bereits schon, aufgrund von Echtzeitanforderungen, irrelevant ist, bzw. bereits ein aktuelleres im TCP-Puffer liegt.\\
 Die Verwendung von TCP für echtzeitrelevante Information ist daher nur ratsam, wenn die zu übertragende Information die von TCP erhaltenen Eigenschaften von Reihenfolge und Übertragungssicherheit auch tatsächlich fordert. In diesem Fall muss ein Protokoll, welches diese Eigenschaften implementiert nicht im Rahmen von UDP selbst umgesetzt werden.\\
 Durch seine Verbindungsorientiertheit bietet sich TCP ebenfalls für die Verbindungskontrolle an, da der Verbindungsstatus, z.B.~ bei abgebrochenen Verbindungen leicht erkannt werden kann. Des weiteren lassen sich auf der Basis einer TCP-Verbindung leicht eigene sequenzielle Protokolle implementieren, z.B. um eine Verbindung zweier Applikationen in der Applikationsschicht initial herzustellen.
-\item UDP, maximale Größe von Einzelpaketen, sonst keine relevanten Anforderungen\\
-	Im Videospielbereich sehen wir hauptsächlich UDP verwendet, höchstwahrscheinlich
-	da die meisten Informationen im Rahmen der Echtzeitsynchronisation von Videospielen die unter TCP beschriebenen Eigenschaften nicht zwingend fordert.
+\item UDP\\
+Relevante Eigenschaften: maximale Größe von Einzelpaketen, sonst keine relevanten Anforderungen.\\
+	Im Videospielbereich sehen wir hauptsächlich UDP verwendet, höchstwahrscheinlich da die meisten Informationen im Rahmen der Echtzeitsynchronisation von Videospielen die unter TCP beschriebenen Eigenschaften nicht zwingend fordert.
 \end{enumerate}
 
 Im Folgenden werden diese Protokolle für hier enthaltenen Verwendungszwecke in Betracht gezogen und entsprechend ihrer Eigenschaften gewählt.
@@ -144,15 +150,15 @@ Es werden prinzipiell zwei grundlegende Formate von temporärer Information für
 \item Statusinformation\\
 In der Simulation liegt die Information zu ihren Inhalten in Form von gezeiteten Stati vor, d.h. ein Zustand eines Simulationsinteresses zu einem bestimmten Zeitpunkt, sei dieser Real- oder Simulationszeit. \\
 So ist ein Projektil z.B.~durch Position und Geschwindigkeit zu einem Simulationszeitpunkt dargestellt, welche nach entsprechenden physikalischen Gesetzen aktualisiert werden kann.\\
-Die wohl interessanteste Eigenschaft von Statusinformation im Rahmen der Synchronisierung ist bei Mitführung des Zeitpunktes der Validität der Information die inhärente Redundanz bei wiederholter Übertragung durch simples Überschreiben älterer Stati, welche die Übertragung sehr robust macht.
-Das präferierte Übertragungsprotokoll für diese Art Information ist UDP, da es dessen Eigenschaftsprofil entspricht.
+Die wohl interessanteste Eigenschaft von Statusinformation im Rahmen der Synchronisierung ist bei Mitführung des Zeitpunktes der Validität der Information die inhärente Redundanz bei wiederholter Übertragung durch simples überschreiben älterer Stati, welche die Übertragung sehr robust macht.
+Das präferierte Transportprotokoll für diese Art Information ist UDP, da es dessen Eigenschaftsprofil entspricht.
 Wir erkennen jedoch auch, dass das Optimierungspotential von Synchronisationsprotokollen bei der Verwendung von roher Statusinformation beschränkt ist. Bei vielen Entitäten, oder bei komplexen Entitäten wird der benötigte Sendungsumfang unter Umständen zu groß.
 Zum Beispiel werden beim Schießen einer Schrotflinte in der Simulation theoretisch zigfach Projektile frei, welche dann simuliert und synchronisiert werden sollen.
 Unter der Verwendung von Statusinformation zur Synchronisation dieser Projektile steigt die Menge der zur Synchronisation versendeten Daten mindestens linear mit der Anzahl der Projektile.\\
-Dieser Umstand kann nur durch eine abstraktere Behandlung von mehreren Projektilen in der Simulation, beispielsweise als Schwarm, oder eine abstraktere Übertragungsmethode abgeschwächt werden.
+Dieser Umstand kann nur durch eine abstraktere Behandlung von mehreren Projektilen in der Simulation, beispielsweise als Schwarm, abgeschwächt werden.
 \item Aktualisierungsinformation\\
 beschreibt die Änderung eines Zustands zu einem bestimmten Zeitpunkt. Diese umfassen meist codierte Anweisungen oder arithmetische Differenzen, welche auf den Status am Empfänger aufgerechnet werden.\\
-Ein Problem mit Änderungsinformation besteht, wenn diese keine kommutativen und/oder assoziativen Eigenschaften beinhaltet und so sowohl die Übertragungsreihenfolge als auch die Übertragung selbst abgesichert sein muss, um die Äquivalenz des am Empfänger ermittelten Simulationsstatus sicherzustellen. In diesem Fall ist das präferierte Übertragungsprotokoll TCP, da dieses die so geforderten Eigenschaften mitbringt. Ist die Reihenfolge oder das Fehlen der Information am Empfänger allerdings nicht kritisch kann auch hierfür einfach UDP verwendet werden. Es ist jedoch hier essentiell eine Analyse zu vollziehen, da sonst zu synchronisierende Simulationsstati sich plötzlich und oft sogar unerkannt desynchronisieren können.
+Ein Problem mit Änderungsinformation besteht, wenn diese keine kommutativen und\/oder assoziativen Eigenschaften beinhaltet und so sowohl die Übertragungsreihenfolge als auch die Übertragung selbst abgesichert sein muss, um die Äquivalenz des am Empfänger ermittelten Simulationsstatus sicherzustellen. In diesem Fall ist das präferierte Übertragungsprotokoll TCP, da dieses die so geforderten Eigenschaften mitbringt. Ist die Reihenfolge oder das Fehlen der Information am Empfänger allerdings nicht kritisch kann auch hierfür einfach UDP verwendet werden. Es ist jedoch hier essentiell eine Analyse zu vollziehen, da sonst zu synchronisierende Simulationsstati sich plötzlich und oft sogar unerkannt desynchronisieren können.
 
 \end{enumerate}
 

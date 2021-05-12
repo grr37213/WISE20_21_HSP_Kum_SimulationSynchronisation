@@ -18,25 +18,15 @@ Im Laufe der Arbeit werden Kernaspekte zur Synchronisation, aber auch zum benöt
 Die verwendete Simulationsanwendung ist ein rudimentäres 3D-Shooter-Videospiel. Ein Spieler kann dabei in einem Terrain auf Gegnerfiguren schießen, diese beschädigen und wird dabei durch Punkte entlohnt. Diese einfache Anwendung hält bereits alle Kernaspekte einer Simulation im Kontext dieser Arbeit inne:
 \begin{itemize}
 \item Die Simulation ist gezeitet und läuft in einer bestimmten Rate zur Realzeit. Diese Rate soll meist $1$ sein, bei der programmierte physikalische Vorgänge dieselbe Geschwindigkeit wie in der Realität annehmen. Die Simulation besitzt dadurch ihre eigene Simulationszeitbasis.
-\item Verschiedene Arten von zu simulierenden Entitäten in einem Simulierten Raum (Gegner, Spielerfiguren, Projektile, Geräusche) mit unterschiedlichem Verhalten/unterschiedlicher Physik.
+\item Verschiedene Arten von zu simulierenden Entitäten in einem Simulierten Raum (Gegner, Spielerfiguren, Projektile, Geräusche) mit unterschiedlichem Verhalten \/unterschiedlicher Physik.
 \item Interaktionen zwischen Entitäten (Kollisionen, Anti-Clipping)
 \item Einflüsse durch Bediener/Spieler (Bewegung der Spielerfigur, Erzeugung von Projektilen)
 \item Grafische Ausgabe in Echtzeit zu einer dreidimensionalen Perspektive
 \end{itemize}
 
-Die Simulation von Simulationsinhalten erfolgt in Schritten, in denen ein Inhalt von einem bestehenden Zustand auf einen Zustand zu fortgeschrittener Simulationszeit verändert wird. Ein solcher Zeitschritt wird als Tick bezeichnet (siehe Appendix \ref{sec:tick} oder vgl. Quelle \ref{tick}).\\
+Die Simulation von Simulationsinhalten erfolgt in Schritten, in denen ein Inhalt von einem bestehenden Zustand auf einen Zustand zu fortgeschrittener Simulationszeit verändert wird. Ein solcher Zeitschritt wird als Tick bezeichnet (siehe Appendix \ref{sec:tick} oder vgl.~Quelle \cite{tick}).\\
 Die Anzeige der Simulation erfolgt durch Extrapolation des letzten bekannten Zustands der Simulationsinhalte. Die Anzeige führt dabei keine Änderungen auf den Simulationsinhalten durch. Wir bezeichnen den Prozess sowie sein Ergebnis als Frame (vgl. Appendix \ref{sec:tick}).
 Die Framerate kann ungleich der Tickrate sein, um unabhängig von den Fähigkeiten des Anzeigesystems eine flüssiges Bild zu generieren. Da in einem Frame keine Simulationsinhalte geändert werden, sind die Simulationinhalte komplett unabhängig zur Anzeige.\\
-
-In vielen kommerziellen Produkten in der Videospielbranche wird diese Trennung nicht sauber vollzogen.\\
-Es folgen Inkonsistenzen in der Simulation in Abhängigkeit der Framerate.
-(Beispiel in \glqq The Elder Scrolls V: Skyrim\grqq falsche physikalische Berechnungen auf Grund zu hoher Frameraten lernen Mammuts das Fliegen \cite{flying-fucking-mammoths})
-Es existiert dort dann meist eine maximale Framerate.
-Dieser Umstand scheint die Problematik mitzuführen, dass viele Videospielhersteller, vor allem im Konsolenbereich, Frameraten immer weiter nach unten limitieren, um ihre Produkte umzusetzen, was die Qualität erheblich senkt (Beispiele \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
-(entgegen der Meinung ihrer Marketingabteilungen, mit einer Menge negativer Presse, Beispiele \cites{morecinematic00, morecinematic01}
-) und dazu führt dass Benutzer ihre u.U.~teure, fähige Hardware nicht ausnutzen können und sich mit schlechter Bildqualität zufrieden geben müssen.\\
-Ein Umstand, der oft auf umständlichem Weg durch fähige Konsumenten selbstständig gelöst wird (vgl. \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
-Die Trennung von Physik und Grafik scheint eine grundsätzliche Designentscheidung zu sein, die in vielen kommerziell genutzten Engines fehlt.
 
 Die beschriebene Anwendung funktioniert zu Beginn des Projektes lokal mit einem Benutzer. Es ist Ziel dieser Arbeit möglichst volle Funktionalität auf mehrere Benutzer, welche mit einer Netzwerkverbindung verbunden sind zu erweitern und dabei möglichst wenige negative Seiteneffekte zu erzeugen.
 
