@@ -62,7 +62,18 @@ Theoretisch kann die Rate auch negative Werte annehmen. Die Simulationszeit wür
 Die Simulation behandelt das Verstreichen von Zeit in Zeitschritten, während dem der interne Zustand der Simulation, bzw.~der simulierten Objekte, zu einem zeitlich neuen Zustand aktualisiert wird.
 Dieser Zeitschritt, bzw.~Verarbeitungsschritt, wird als Tick bezeichnet \cite{tick}.
 Es ist besonders anzumerken, das der Begriff des Ticks sich ausschließlich auf das Voranschreiten der Simulation auch bei kompletter Abwesenheit einer graphischen Renderingpipeline bezieht. Im grafischen Kontext wird dafür der Begriff Frame (dt. Bild) verwendet, da der äquivalente Prozess der Grafik einmal pro Rendern und Anzeigen eines Bildes geschieht.\\
+
 Von beiden Größen können Raten $r_{tick}, r_{frame} \in \mathbb{R}$ angegeben werden (üblicherweise in Tick/Frame pro Realzeitsekunde). Praktisch kann eine Grafikengine durch Inter- oder Extrapolation dynamisch verschiedene, von der Tickrate unabhängige Frameraten erreichen.\\
+
+Bei einer unsauberen Trennung der beiden Rate treten Inkonsistenzen in der Simulation in Abhängigkeit der Framerate auf (Beispiel: In \glqq The Elder Scrolls V: Skyrim\grqq lernen Mammuts auf Grund falscher physikalischer Berechnungen in Abhängigkeit von zu hohen Frameraten das Fliegen \cite{flying-fucking-mammoths}).
+
+Es existiert dort dann meist eine maximale Framerate.
+Dieser Umstand scheint die Problematik mitzuführen, dass viele Videospielhersteller, vor allem im Konsolenbereich, Frameraten immer weiter nach unten limitieren, um ihre Produkte umzusetzen, was die Qualität erheblich senkt (Beispiele \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
+(entgegen der Meinung ihrer Marketingabteilungen, mit einer Menge negativer Presse, Beispiele \cites{morecinematic00, morecinematic01}
+) und dazu führt dass Benutzer ihre u.U.~teure, fähige Hardware nicht ausnutzen können und sich mit schlechter Bildqualität zufrieden geben müssen.\\
+Ein Umstand, der oft auf umständlichem Weg durch fähige Konsumenten selbstständig gelöst wird (vgl. \cites{skyrim-physics-cap-and-fix, dark_souls-physics-cap-and-fix})
+Die Trennung von Physik und Grafik scheint eine grundsätzliche Designentscheidung zu sein, die in vielen kommerziell genutzten Engines fehlt.
+
 Wir definieren einen Tick anhand seiner realen, ersten Auftrittszeit
 \begin{align}
 \delta_t: t \in T_r

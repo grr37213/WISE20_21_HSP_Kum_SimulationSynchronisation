@@ -9,7 +9,7 @@ Die Synchronisation der Simulationszustände beinhaltet demnach die rechtzeitige
 
 Nach dieser Definition oder nach dessen Teilen, finden wir Echtzeitsynchronisation in industriellen Anwendungen wieder. Zum Beispiel kann im Bereich der Robotik der rechtzeitige Informationsfluss zwischen Steuergeräten und Sensoren als Echtzeitsynchronisation angesehen werden.
 %%TODO cite example
-Das wohl ähnlichste Anwendungsbeispiel im Kontext dieser Arbeit lässt sich im Bereich der Videospiele, oder Bedienersimulationen finden, wo ein echtzeitsynchronisierter Simulationsstatus auf mehreren Maschinen lokal angezeigt werden muss, Bediener jedoch auch selbst Einfluss auf die Simulationsinhalte nehmen können.\\
+Das wohl ähnlichste Anwendungsbeispiel im Kontext dieser Arbeit lässt sich im Bereich der Videospiele finden, wo ein echtzeitsynchronisierter Simulationsstatus auf mehreren Maschinen lokal angezeigt werden muss, Bediener jedoch auch selbst Einfluss auf die Simulationsinhalte nehmen können.\\
 In diesem Projekt wird auf einer bestehenden Codebasis einer Simulation, welche nicht unter Einbezug von Synchronisationsgedanken entwickelt wurde, eine solche umgesetzt. Dabei soll eine Echtzeitsynchronisation zwischen mehreren Rechenmaschinen über eine Internetverbindung mit 100\,KByte/s Bandbreite erreicht werden.
 Das letztendliche Ziel ist die möglichst unmerkliche Synchronisierung zweier Simulationszustände und deren Anzeige, d.h. die Reduzierung von Seiteneffekten durch Latenz.\\
 Im Laufe der Arbeit werden Kernaspekte zur Synchronisation, aber auch zum benötigten Softwaredesign ermittelt, um synchrone Applikationen umzusetzen. Durch den Status-Quo der übernommenen Codebasis werden durch die Überarbeitung dort gemachte Fehler in diesen Aspekten erkenntlich.
