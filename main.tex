@@ -39,6 +39,7 @@
 %\hyphenation{min-des-tens}
 %\hyphenation{Kol-li-sions-er-ken-nung}
 \hyphenation{Ü-ber-tra-gungs-reih-en-folge}
+\hyphenation{Uni-di-rek-tio-na-li-tät}
 
 %-------------------------- Formatsachen --------------------------%
 
@@ -198,7 +199,7 @@ Eine spezielle Entität, welche als Avatar für den Benutzer in der simulierten 
 \item OS-Zugang\\
 Enthält Zugriff und Schnittstellen zu Ressourcen des Betriebssystems, dem Fenster, Ereignisquellen, Lautsprecher, etc.
 \item Ereignisverarbeitung\\
-Über Bibliotheken werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse (eng. \textit{events}) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
+Über Bibliotheken werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und zum Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse (eng. events) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
 Weiter sollen natürlich Eingaben für die Verwendung als Steuerung der Simulation verwendet werden. Die Ereignisverarbeitung beschreibt dabei ein System, welches die Eingaben in einen von der Simulation, bzw.~von Benutzerentitäten interpretierbaren Status umwandelt.
 \item 3D-Renderer der Simulation\\
 Die Aufgabe des Renderers ist es, ein Bild des simulierten Raums aus einer bestimmte Perspektive zu erstellen und auf ein Fenster des Betriebssystems zu übertragen.
@@ -262,14 +263,11 @@ Die Existenz dieser konkretisierten Abstraktionen erlauben weiter die Umsetzung 
 \item Optionalität einer grafischen Ausgabe\\
 	Durch die Trennung der Perspektive von der Spielerfigur kann nun entschieden werden, ob ein 3D-Renderer überhaupt initialisiert wird. Das ist vor allem für die Anforderung mehrerer Benutzer von Interesse, weil so theoretisch beliebig viele Perspektiven der existierenden Spielerfiguren gerendert werden können. Die Grafik ist dadurch nicht nur flexibler, es macht auch die Implementierung eines dedizierten Servers (ohne lokalen Benutzer) möglich.
 \item Unterschiedliche grafische Ausgabeperspektiven\\
-	Es ist möglich einer graphischen Ausgabe unterschiedliche Perspektiven zur Anzeige zuzuweisen. Vorausgesetzt mehrere aktive Simulationsinhalte sind dazu fähig eine Perspektive zu spezifizieren (derzeitig nur eine Art von Spielerfigur)
+	Es ist möglich einer grafischen Ausgabe unterschiedliche Perspektiven zur Anzeige zuzuweisen. Vorausgesetzt mehrere aktive Simulationsinhalte sind dazu fähig eine Perspektive zu spezifizieren (derzeitig nur eine Art von Spielerfigur)
 \item Kontrolle von schreibendem Zugriff eines auf Simulationsinhalte (für Clients)\\
 Die Unterscheidung der Simulation und der Simulationsinhalte/Entitäten ermöglicht die Übertragung der Simulationsinhalte außerhalb des konkreten Kontextes der aktiven Simulation. So müssen Simulationsinhalte nicht von ausschließlich der Simulation aktualisiert werden, sondern dies kann z.B. über eine Netzwerkverbindung geschehen.
 \item Stabiler Applikationsstart unabhängig zu einer Simulation (Öffnen des Fensters, Mausverhalten)\\
-	Durch die Abgrenzung von Belangen vor allem hinsichtlich benötigter Systemressourcen von der Simulationsanwendung ermöglicht benutzerdefinierte Einstellungen der Applikation durch Konfiguration, Eingabeparameter.
-	So können verschiedene Applikationskontexte realisiert werden, z.B.~als Client, als Server, nur Lokal, Fernsteuerung, etc..
-	Es so einfacher das Laden von benötigten Applikationsressourcen, besonders im grafischen Kontext gesteuert werden.
-	Weiter ist die angesprochene benötige Überarbeitung mancher durch die generelle Änderung betroffener Features so nun einfacher zu vollziehen.
+Durch die Abgrenzung von Belangen, vor allem hinsichtlich geladener Ressourcen, wie Texturen, Eingabeparameter oder Konfigurationsdateien, werden benutzer- oder kontextdefinierte Einstellungen der Applikation möglich. So können verschiedene Applikationskontexte mit weniger unnötigem Ressourcenoverhead realisiert werden, z.B.~als Client, als Server, nur Lokal, Fernsteuerung, etc.. Die fehlende Behandlung dieses Overheads bei der Überarbeitung einzelner Features im Rahmen dieses Projektes stellt eine Erleichterung dar.
 \end{itemize}
 
 Wie diese nun ermöglichten Features im Weiteren zur Umsetzung der Projektziele verwendet werden wird in den folgenden Abschnitten erläutert.

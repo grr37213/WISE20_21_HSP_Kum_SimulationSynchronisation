@@ -26,7 +26,7 @@ Die verwendete Simulationsanwendung ist ein rudimentäres 3D-Shooter-Videospiel.
 
 Die Simulation von Simulationsinhalten erfolgt in Schritten, in denen ein Inhalt von einem bestehenden Zustand auf einen Zustand zu fortgeschrittener Simulationszeit verändert wird. Ein solcher Zeitschritt wird als Tick bezeichnet (siehe Appendix \ref{sec:tick} oder vgl.~Quelle \cite{tick}).\\
 Die Anzeige der Simulation erfolgt durch Extrapolation des letzten bekannten Zustands der Simulationsinhalte. Die Anzeige führt dabei keine Änderungen auf den Simulationsinhalten durch. Wir bezeichnen den Prozess sowie sein Ergebnis als Frame (vgl. Appendix \ref{sec:tick}).
-Die Framerate kann ungleich der Tickrate sein, um unabhängig von den Fähigkeiten des Anzeigesystems eine flüssiges Bild zu generieren. Da in einem Frame keine Simulationsinhalte geändert werden, sind die Simulationinhalte komplett unabhängig zur Anzeige.\\
+Die Framerate (frames per second; fps) kann ungleich der Tickrate sein, um unabhängig von den Fähigkeiten des Anzeigesystems eine flüssiges Bild zu generieren. Da in einem Frame keine Simulationsinhalte geändert werden, sind die Simulationinhalte komplett unabhängig zur Anzeige.\\
 
 Die beschriebene Anwendung funktioniert zu Beginn des Projektes lokal mit einem Benutzer. Es ist Ziel dieser Arbeit möglichst volle Funktionalität auf mehrere Benutzer, welche mit einer Netzwerkverbindung verbunden sind zu erweitern und dabei möglichst wenige negative Seiteneffekte zu erzeugen.
 
