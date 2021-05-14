@@ -194,17 +194,17 @@ Der User ist die Repräsentation eines (menschlichen) Bedieners und regelt somit
 \item Entitäten\\
 Sind Simulationsinhalte. Eine Entität beschreibt ein \glqq Etwas\grqq, das simuliert werden soll, im konkreten etwas, welches sich im simulierten Raum befindet. Eine Entität beschreibt ihr Verhalten in Abhängigkeit zur Simulationszeit und kann Interaktionen mit anderen Entitäten eingehen. Entitäten werden genauer im Anhang~\ref{sec:entity} erklärt.
 \item Benutzerentität/Spielerfigur\\
-Eine spezielle Entität, welche als Avatar für den Benutzer in der simulierten Welt dient. Diese Spezialisierung ist essentiell im Bereich von Videospielen, um dem Spieler Zugang zur simulierten Welt zu geben indem die Spielerfigur Interaktionen verursacht. Die Benutzerentität implementiert dabei im Entitätsverhalten die Reaktion auf Eingabeparameter eines Benutzers und ermöglicht den Erhalt einer Perspektive auf einen simulierten Raum, v.A.~für Zwecke des Renderings aus der dreidimensionalen Perspektive der Figur.
+Eine spezielle Entität, welche als Avatar für den Benutzer in der simulierten Welt dient. Diese Spezialisierung ist essentiell im Bereich von Videospielen, um dem Spieler Zugang zur simulierten Welt zu geben, indem die Spielerfigur Interaktionen verursacht. Die Benutzerentität implementiert dabei im Entitätsverhalten die Reaktion auf Eingabeparameter eines Benutzers. Außerdem ermöglicht sie den Erhalt einer Perspektive auf einen simulierten Raum, v.A.~für Zwecke des Renderings aus der dreidimensionalen Perspektive der Figur.
 \item OS-Zugang\\
-Enthält Zugriff und Schnittstellen zu Ressourcen des Betriebssystems, dem Fenster, Ereignisquelle, Lautsprecher, etc.
+Enthält Zugriff und Schnittstellen zu Ressourcen des Betriebssystems, dem Fenster, Ereignisquellen, Lautsprecher, etc.
 \item Ereignisverarbeitung\\
 Über Bibliotheken werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse (eng. \textit{events}) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
 Weiter sollen natürlich Eingaben für die Verwendung als Steuerung der Simulation verwendet werden. Die Ereignisverarbeitung beschreibt dabei ein System, welches die Eingaben in einen von der Simulation, bzw.~von Benutzerentitäten interpretierbaren Status umwandelt.
-\item 3D Renderer der Simulation\\
+\item 3D-Renderer der Simulation\\
 Die Aufgabe des Renderers ist es, ein Bild des simulierten Raums aus einer bestimmte Perspektive zu erstellen und auf ein Fenster des Betriebssystems zu übertragen.
 Ein Renderer greift lesend in viele Aspekte der Simulation ein, um die Informationen für seine Aufgabe zu erhalten.
 \item Applikationskopf\\
-Als zentrale Organisationsstruktur des Programms ist es die Aufgabe des Applikationskopfes, den Programmablauf zu Regeln. Das Programm besteht in seinem Kern aus einer Schleife, in der wiederholt andere genannte Subkomponenten ihre Verarbeitungsschritte durchführen. Der Applikationskopf dient dabei als Abstraktion für das Verhalten der Gesamtapplikation. So können verschiedene Verwendungszwecke, bzw. Arten der Gesamtapplikation (Standardprogramm, Fernbedienung, Simulation mit Fernbedienungsempfänger, etc.) realisiert werden.
+Als zentrale Organisationsstruktur des Programms ist es die Aufgabe des Applikationskopfes, den Programmablauf zu regeln. Das Programm besteht in seinem Kern aus einer Schleife, in der wiederholt andere genannte Subkomponenten ihre Verarbeitungsschritte durchführen. Der Applikationskopf dient dabei als Abstraktion für das Verhalten der Gesamtapplikation. So können verschiedene Verwendungszwecke, bzw. Arten der Gesamtapplikation (Standardprogramm, Fernbedienung, Simulation mit Fernbedienungsempfänger, etc.) realisiert werden.
 \end{enumerate}
 
 \begin{figure}
@@ -260,7 +260,7 @@ Die Existenz dieser konkretisierten Abstraktionen erlauben weiter die Umsetzung 
 \item Behandlung mehrerer Benutzer, mehrerer Eingaben\\
 	Vor allem die isolierte Abstraktion der Simulation kann nun auf die Fähigkeit zur Behandlung meherer Benutzer erweitert werden.
 \item Optionalität einer grafischen Ausgabe\\
-	Durch die Trennung der Perspektive von der Spielerfigur kann nun entschieden werden, ob ein 3D-Renderer überhaupt initialisiert wird. Das ist vor allem für die Anforderung mehrerer Benutzer von Interesse, weil so theoretisch beliebig viele Perspektiven der existierenden Spielerfiguren gerendert werden können. Die grafik ist dadurch nicht nur flexibler, es macht auch die Implementierung eines dedizierten Servers (ohne lokalen Benutzer) möglich.
+	Durch die Trennung der Perspektive von der Spielerfigur kann nun entschieden werden, ob ein 3D-Renderer überhaupt initialisiert wird. Das ist vor allem für die Anforderung mehrerer Benutzer von Interesse, weil so theoretisch beliebig viele Perspektiven der existierenden Spielerfiguren gerendert werden können. Die Grafik ist dadurch nicht nur flexibler, es macht auch die Implementierung eines dedizierten Servers (ohne lokalen Benutzer) möglich.
 \item Unterschiedliche grafische Ausgabeperspektiven\\
 	Es ist möglich einer graphischen Ausgabe unterschiedliche Perspektiven zur Anzeige zuzuweisen. Vorausgesetzt mehrere aktive Simulationsinhalte sind dazu fähig eine Perspektive zu spezifizieren (derzeitig nur eine Art von Spielerfigur)
 \item Kontrolle von schreibendem Zugriff eines auf Simulationsinhalte (für Clients)\\
@@ -269,7 +269,7 @@ Die Unterscheidung der Simulation und der Simulationsinhalte/Entitäten ermögli
 	Durch die Abgrenzung von Belangen vor allem hinsichtlich benötigter Systemressourcen von der Simulationsanwendung ermöglicht benutzerdefinierte Einstellungen der Applikation durch Konfiguration, Eingabeparameter.
 	So können verschiedene Applikationskontexte realisiert werden, z.B.~als Client, als Server, nur Lokal, Fernsteuerung, etc..
 	Es so einfacher das Laden von benötigten Applikationsressourcen, besonders im grafischen Kontext gesteuert werden.
-	Weiter ist die Angesprochene benötige Überarbeitung mancher durch die generelle Änderung betroffener Features so nun einfacher zu vollziehen.
+	Weiter ist die angesprochene benötige Überarbeitung mancher durch die generelle Änderung betroffener Features so nun einfacher zu vollziehen.
 \end{itemize}
 
 Wie diese nun ermöglichten Features im Weiteren zur Umsetzung der Projektziele verwendet werden wird in den folgenden Abschnitten erläutert.
