@@ -25,14 +25,14 @@ Die Umsetzung einiger Features als unidirektionaler Status gestaltet sich jedoch
 Zunächst waren zuvor einige Features ohne diese Anforderungen realisiert und erforderten einen Umbau, um einen unidirektionalen Status interpretieren zu können.
 Außerdem sind einige Features strukturell unter den Anforderungen schwierig umzusetzen, bzw.~leiden sogar unter den Anforderungen:
 \begin{itemize}
-\item Die Betätigung eines Auslösers, z.B.~zum Schießen in der Shooter-Applikation ist starken Echtzeitanforderungen unterlegen. Bei längeren Latenzzeiten kann z.B. das klicken der Maus mehrfach geschehen. Wie oft und wie lange wurde der Schalter nun betätigt? Bei den möglicherweise anliegenden Latenzen ist eine dynamische Abtastrate durch einen nicht-dynamischen Status nicht abbildbar. Weiter ist die Abtastrate des Eingabegeräts ebenfalls beschränkt, wir schätzen diese allerdings als so hoch ein, dass dies irrelevant für unsere Überlegungen ist. An dieser Stelle sind unter den gegebenen Umständen die Fähigkeiten der Applikation beschränkt.
+\item Die Betätigung eines Auslösers, z.B.~zum Schießen in der Shooter-Applikation ist starken Echtzeitanforderungen unterlegen. Bei längeren Latenzzeiten kann z.B. das Klicken der Maus mehrfach geschehen. Wie oft und wie lange wurde der Schalter nun betätigt? Bei den möglicherweise anliegenden Latenzen ist eine dynamische Abtastrate durch einen nicht-dynamischen Status nicht abbildbar. Weiter ist die Abtastrate des Eingabegeräts ebenfalls beschränkt, wir schätzen diese allerdings als so hoch ein, dass dies irrelevant für unsere Überlegungen ist. An dieser Stelle sind unter den gegebenen Umständen die Fähigkeiten der Applikation beschränkt.
 \item Die Selektion aus einer Menge von selektierbaren Dingen.\\
 Ist die Menge der selektierbare Dinge bekannt und statisch, kann die Selektion durch einen einfachen Integer-Status  in einem Restraum dargestellt werden. Ist die Menge auszuwählender Elemente jedoch dynamisch, wird ohne die Möglichkeit der Rückkommunikation dieser Anzahl die Umsetzung dieses Features weitaus schwieriger, bzw. Anforderungen an den Selektionsmechanismus müssen grundlegend überdacht werden.
 \end{itemize}
 
 Einige Konzepte lassen sich jedoch vergleichsweise leicht umsetzen.
 \begin{itemize}
-\item Absolute Ausrichtung der Benutzerfigur (3D-Vekotr)
+\item Gewünschte Ausrichtung der Benutzerfigur (3D-Vektor)
 \item Bewegungsintention des Bedieners (3D-Vektor)
 \item etc.
 \end{itemize}

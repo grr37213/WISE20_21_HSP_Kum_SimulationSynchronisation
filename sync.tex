@@ -12,15 +12,16 @@ Es scheint praktisch, die in der Fernsteuerung umgesetzten Eingabemethoden wiede
 
 Ein Ziel der Synchronisation der Simulation auf verschiedenen Rechenmaschinen ist die Illusion von Gleichzeitigkeit, trotz der von der Latenz verursachter Seiteneffekte, zu erzeugen.
 Bei Synchronisationsvorgängen von gezeiteten Simulationsinhalten ist eine gemeinsame Zeitbasis sinnvoll.
-Auf verschiedenen Rechenmaschinen liegen jedoch unterschiedliche Uhren vor, welche sich in durch den Einfluss der Hardware oder des Betriebssystems in Epoche und Clockrate unterscheiden können. Typische Symptome sind Drift und Jitter bei Uhren auf verschiedenen Systemen.
+Auf verschiedenen Rechenmaschinen liegen jedoch unterschiedliche Uhren vor, welche sich durch den Einfluss der Hardware oder des Betriebssystems in Epoche und Clockrate unterscheiden können. Typische Symptome sind Drift und Jitter bei Uhren auf verschiedenen Systemen.
 Eine Synchronisation der Zeitbasen selbst bedeutet regelmäßig die Uhren zu stellen und die Umrechnung unterschiedlicher Uhrenarten oder Zeitformaten bereitzustellen.\\
 Zunächst wird eine minimale Genauigkeit der Zeitabtastung in Mikrosekunden auf allen verwendeten Maschinen versichert . Zudem gilt die Unterscheidung der messbare Zeitbasen einer Realzeit und der relativ dazu laufenden Simulationszeit (vgl. Appendix \ref{sec:time}).\\
 Aus der o.g. Master-Slave-Strategie folgt, dass der Server (Master) die Simulationszeit vorgibt, d.h.~es ist die Aufgabe der Clients, ihre Simulationszeituhren einzustellen. 
 Bei der Zeitsynchronisation mit dem Server wird die Latenz der Realzeit beidseitig gemessen.
-Dies muss hier in beiden Richtungen geschehen, da die einzelnen Signallaufzeiten ohne vorher synchrone Uhren nicht auf der selben Realzeitbasis existieren und Zeiten sonst nicht vergleichbar ermittelt werden können. 
-Die einzelne Signallaufzeit kann abgeschätzt werden, indem die 2-Wege-Laufzeit halbiert wird. Dazu werden zu jedem UDP-Paket, welche eine frequente Kommunikation umsetzen, zwei Zeitstempel versendet, wobei einer die aktuelle Serverzeit und der andere die aktuelle Clientzeit beinhaltet.
+Dies muss hier mit Messungen der Zwei-Wege-Laufzeit (eng. round-trip time) geschehen, da die einzelne Signallaufzeit ohne vorher synchrone Uhren nicht ermittelt werden kann. 
+Die einzelne Signallaufzeit kann abgeschätzt werden, indem die Zwei-Wege-Laufzeit halbiert wird. Dazu werden zu jedem UDP-Paket, welche eine frequente Kommunikation umsetzen, zwei Zeitstempel versendet, wobei einer die aktuelle Serverzeit und der andere die aktuelle Clientzeit beinhaltet.
+Server und Client kennen die tatsächlichen Zeit ihres Gegenübers nicht, weswegen sie den jeweils aktuellsten bestätigten Zeitpunkt des Gegenübers speichern, welcher statt dem tatsächlichen gesendet wird.
 So legt ein Zeitstempel jeweils Hin- und Rückrichtung zurück und die Zwei-Wege-Laufzeit kann anhand der Stempel in empfangenen Paketen an beiden Knoten ermittelt werden.\\
-Prinzipiell ist zum alleinigen Zweck der Synchronisation der Simulation auch nur die Synchronisation der Simulationszeituhren vonnöten.
+Prinzipiell ist zum alleinigen Zweck der Synchronisation der Simulation jedoch nur die Synchronisation der Simulationszeituhren vonnöten.
 
 \begin{figure}
     \centering
@@ -31,14 +32,14 @@ Prinzipiell ist zum alleinigen Zweck der Synchronisation der Simulation auch nur
 
 Die offensichtlichste Variante der Einstellung der Simulationszeituhr am Client ist, möglichst Gleichzeitigkeit mit der Serveruhr anzustreben. Diese hätte allerdings Implikationen für die Implementierung, wie in Abb.~\ref{fig:zeichnung1a} ersichtlich. 
 Aktionen, die vom Client ausgelöst werden, kommen erst verspätet am Server an.
-Dieser müsste die so erhaltene Information retroaktiv anwenden, um die Richtigkeit aus der Sicht des Clients herzustellen.
-Dann muss im schlimmsten Fall die gesamte Simulation wiederholt werden (von 0 bis~3), um einen korrekten Zustand zu Zeitpunkt~3 herzustellen. Dies benötigt Speicher, für die Speicherung alter Simulationszustände, und Rechenleistung zur wiederholten Neuberechnung von schon behandelten Simulationszeitpunkten. Den zweiten Teil der Arbeit hat der Client. Er erhält die Simulation zum Zeitpunkt~3 und muss daraus ein Bild für den Benutzer generieren, das den Zeitpunkt~6 darstellt. Dies kann auf 2 Arten erreicht werden.
+Dieser müsste die so erhaltenen Informationen retroaktiv anwenden, um die Richtigkeit aus der Sicht des Clients herzustellen.
+Dann muss im schlimmsten Fall die gesamte Simulation wiederholt werden (im Beispiel von Zeitpunkt 0 bis~3), um einen korrekten Zustand zu Zeitpunkt~3 herzustellen. Dies benötigt Speicher für vorherige Simulationszustände und Rechenleistung zur wiederholten Neuberechnung von schon behandelten Simulationszeitpunkten. Den zweiten Teil der Arbeit hat der Client. Er erhält die Simulation zum Zeitpunkt~3 und muss daraus ein Bild für den Benutzer generieren, das den Zeitpunkt~6 darstellt. Dies kann auf 2 Arten erreicht werden.
 \begin{enumerate}
 \item Simulation am Client für die fehlenden Zeitschritte simulieren und das Ergebnis anzeigen. Dies hat den Vorteil, dass die Anzeige am Bildschirm am genauesten den echten Zustand darstellt, da alle Informationen in das Bild einfließen. Nachteile sind:
 \begin{itemize}
  \item ein höherer Berechnungsaufwand, da die Simulation nun nicht nur am Server, sondern auch am Client stattfinden muss. 
  \item Der Server muss nicht nur Informationen, die die Anzeige am Bildschirm betreffen, versenden, sondern auch Werte, die nur für den Simulationsschritt wichtig sind.
- \item Wenn am Server etwas passiert, von dem der Client noch keine Informationen hat (z.B. Aktion eines anderen Spielers, die noch nicht angekommen ist), ist der Zustand der Simulation am Client nicht mehr valide. Der Client müsste dann also entweder alte Simulationszustände speichern und eine Neuberechnung durchführen, oder er ließe sich vom Server die komplette Simulation erneut zusenden.
+ \item Wenn am Server etwas passiert, von dem der Client noch keine Informationen hat (z.B. Aktion eines anderen Spielers, die noch nicht angekommen ist), ist der Zustand der Simulation am Client nicht mehr valide. Der Client müsste dann also entweder alte Simulationszustände speichern und eine Neuberechnung durchführen, oder er ließe sich vom Server die vollständigen Simulationsinhalte erneut zusenden.
 \end{itemize}
 \item Der Client rechnet die Anzeige auf unverbindliche Art und Weise nach vorne. Es wird hierbei dieselbe Extrapolation verwendet, die das Grafikmodul verwenden kann, um zwischen wenigen Simulationsschritten viele Bilder am Bildschirm zu erzeugen. Dazu werden vereinfachte Annahmen getroffen, wie z.B.~ dass Objekte sich linear bewegen, anhand der letzten bestätigten Position und letzten bestätigten Geschwindigkeit. Die resultierende Anzeigeposition wird nicht gespeichert, sondern nur zur momentanen Anzeige verwendet.
 Vorteile sind die einfachere Berechnung und geringere benötigte Bandbreite vom Server. Außerdem hängt die benötigte Rechenzeit nicht davon ab, wie weit der letzte bestätigte Zeitpunkt zurückliegt. 
@@ -54,13 +55,13 @@ In der Praxis ist dies in den meisten Fällen aber nicht sehr kritisch, da inner
 Eine weitere Möglichkeit, Uhren am Client einzustellen, ist die Uhr um die Einweg-Latenzzeit zum Server in die Zukunft zu stellen (siehe Abb.~\ref{fig:zeichnung2a}). In diesem Fall kann der Server die Aktionen vom Client als gegenwärtig betrachten und es müssen so keine retroaktiven Berechnungen durchgeführt werden.\\
 Als Beispiel in der Abbildung dient der Schuss eines Projektils.
 Der Schuss zum Zeitpunkt~3 des Clients ist also zu Zeitpunkt~3 am Server vorhanden, sodass er diesen wie eine lokale Eingabe in der Gegenwart verarbeiten kann. Speicherung alter Zustände oder wiederholtes Berechnen des selben Zeitpunktes sind nicht mehr nötig.
-Aus diesen Gründen wurde dieses Modell gewählt. Der Server behandelt alle eingehenden Pakete mit Aktionen vom Client als in der Gegenwart auftretend.
+Aus diesen Gründen wurde dieses Modell gewählt. Der Server behandelt alle also eingehenden Pakete mit Aktionen vom Client als in der Gegenwart auftretend, unabhängig von der Latenzzeit.
 
 Für den Client ändert sich gegenüber dem anderen Ansatz lediglich die Größe der Zeitdifferenz, die mit beiden o.g. Methoden zu einem aktuellen Bild führt. Für dieses Projekt wurde diejenige gewählt, die rein grafisch extrapoliert. Die grafische Diskrepanz zum Simulationszustand, obwohl nun u.U.~größer, wird immer noch als marginal eingeschätzt.\\
 
 Die Berechnung von zeitverschobenen Ereignissen wird so nahezu komplett dem Client überlassen.
 Das führt zudem zu einer hocherwünschten Robustheit des Simulationszustandes am Server gegenüber der Latenz, vor allem im Bezug auf hohe Latenzen zu einzelnen Clients. Die Simulation am Server ist auf diese Weise stabil, während die Seiteneffekte von hoher Latenz gerechterweise nur diejenigen Clienten betreffen, welche eine hohe Latenz zum Server haben.
-Bei retroaktiven Strategien würden alle Clienten unter der hohen Latenz eines einzigen leiden, da dessen extrem verspätete Information so auf alle Clienten retroaktiv verteilt werden müsste.
+Bei retroaktiven Strategien würden alle Clienten unter der hohen Latenz eines einzigen leiden, da dessen extrem verspätete Information trotzdem retroaktiv angewendet werden würden, sodass die große temporale Diskrepanz alle Clients betreffen würde.
 
 %%TODO discussion : Mehrere spieler ? Latenztoleranz? Maximale vorausberechnung von Clients sonst drop? Ja, alles weitere Probleme aber wäre zuviel blah da das sowieso nicht das gewählte Modell ist.
 
@@ -75,7 +76,7 @@ Der Grund, dass die Extrapolation überhaupt notwendig ist, zeigt Abb.~\ref{fig:
 Die Latenz, die für eine korrekte Extrapolation eingerechnet werden muss, muss die Zwei-Wege-Gesamtlatenz inklusive Berechnungslatenz auf Client und Server sein.\\
 
 %%TODO TODO resolved?
-Um die Daten für die oben beschriebene Extrapolation möglichst genau zu ermitteln, bietet es sich an, die benötigten Daten an die normalerweise anfallende Kommunikation anzuhängen, die mit exakt der dafür korrekten Latenz arbeitet. Die Uhr des Servers wird als normales Datenelement (Syncable, später in Abschnitt~\ref{sec:syncable} beschrieben) an die Clients übertragen. Sie beinhaltet die aktuelle und gewünschte Simulationszeitrate relativ zur Realzeit (z.B. 0,1 bedeutet 10-fache Zeitlupe), und den aktuellen Zeitpunkt am Server. 
+Um die Daten für die oben beschriebene Extrapolation möglichst genau zu ermitteln, bietet es sich an, die benötigten Daten an die normalerweise anfallende Kommunikation anzuhängen, die mit exakt der dafür korrekten Latenz arbeitet (inclusive der Latenz, die daraus entsteht, dass Pakete nur mit einer begrenzten Rate gesendet werden). Die Uhr des Servers wird als normales Datenelement (Syncable, später in Abschnitt~\ref{sec:syncable} beschrieben) an die Clients übertragen. Sie beinhaltet die aktuelle und gewünschte Simulationszeitrate relativ zur Realzeit (z.B. 0,1 bedeutet 10-fache Zeitlupe), und den aktuellen Zeitpunkt am Server. 
 Client und Server versenden im Zuge der Latenzberechnung in jedem UDP-Packet ihre aktuellsten Realzeitstempel. Damit kann der Server den aktuellsten bekannten Zeitpunkt der Uhr für jeden Client mitführen. 
 Dieser Zeitpunkt wird in jedem UDP-Packet, welches die Simulationsuhr auf dem Client aktualisiert, mitgeführt werden.
 Wenn der Client nun ein Update der Uhr erhält kann er daraus die Zuordnung Realzeitzeitpunkt der Clientuhr zu Simulationszeitpunkt der Serveruhr (unter Berücksichtigung der Zeitrate) berechnen und so die Uhrensynchronisation beider Simulationszeituhren zwischen Client und Server herstellen. Ein Beispiel für das Verfahren ist in Abb.~\ref{fig:zeichnung3a} zu sehen.
@@ -84,7 +85,7 @@ Wenn der Client nun ein Update der Uhr erhält kann er daraus die Zuordnung Real
     \includegraphics[width=0.75\textwidth]{./Zeichnung3a.png}
     \caption{Diagramm über Beispielsituation bei Simulationszeit-Uhrensynchronisation, mit zeitversetzten Uhren wie in Abb.~\ref{fig:zeichnung2a}. 
 Gleiche Höhe entspricht Gleichzeitigkeit der physikalisch echten Zeit 
-(nicht der Zeit, welche die jeweiligen Maschinen messen und als Realzeit interpretieren). Der Client errechnet aus den Daten in den Synchronisierungspaketen diejenige Simulationszeit, die dem Eintreffen am Server und der Verarbeitungszeit eines hypothetischen Pakets entspricht, wenn es sofort abgesendet werden würde.}
+(nicht der Zeit, welche die jeweiligen Maschinen messen und als Realzeit interpretieren). Der Client errechnet aus den Daten in den Synchronisierungspaketen diejenige Simulationszeit, die dem Eintreffen am Server (mit Verarbeitungszeit) eines hypothetischen Pakets entspricht, das zur nächstmöglichen Gelegenheit abgesendet werden würde.}
     \label{fig:zeichnung3a}
 \end{figure}
 
@@ -95,21 +96,20 @@ Um die Simulationsinhalte übertragen zu können, wurde zunächst ein Interface 
 Zunächst müssen die möglichen Datensätze in Kategorien unterteilt werden:
 \begin{itemize}
 \item Update-Daten: Daten, die ein bestehendes Objekt in den neuen, aktuellen Zustand überführen (z.B. Position). Es handelt sich hierbei immer um Statusinformation.
-\item Vollständiger Datensatz: Daten, die übertragen werden müssen, um ein neues Objekt zu erstellen. Diese Daten beinhalten meist alle Update-Daten und beinhalten zusätzlich noch die Daten, die einmalig zur Initialisierung notwendig sind (z.B. Größe eines konkreten Gegners).
+\item Vollständiger Datensatz: Daten, die übertragen werden müssen, um ein neues Objekt zu erstellen. Diese Daten beinhalten meist auch alle Update-Daten und beinhalten zusätzlich noch die Daten, die einmalig zur Initialisierung notwendig sind (z.B. Größe eines konkreten Gegners).
 \end{itemize}
-Ein konkretes Syncable definiert Serialisierungs- und Deserialisierungsmethoden für beide Kategorien von zu Datenpaketen statt. Für Pakete wird die Programmbibliothek SFML (siehe Quelle~\cite{sfml}), genauer deren Netzwerkkomponente, verwendet, welche eine plattformunabhängige Implementierung eines Datenpaket mitbringt, z.B. im Kontext Endianess.\\
+Ein konkretes Syncable definiert Serialisierungs- und Deserialisierungsmethoden für beide Kategorien mit Datenpaketen als Eingabe bzw. Ausgabe. Für Pakete wird die Programmbibliothek SFML (siehe Quelle~\cite{sfml}), genauer deren Netzwerkkomponente, verwendet. Diese bietet eine plattformunabhängige Implementierung eines Datenpakets z.B. im Kontext Endianess und ermöglicht das direkte Schreiben und Lesen der häufigen Datentypen (z.B. 32-bit Integer) in das/aus dem Paket.\\
 Serialisierte Informationen mehrerer Syncables werden in Paketen gesammelt.
 Bei der Deserialisierung passiert der umgekehrte Prozess der Serialisierung: Die Daten werden aus dem Paket entnommen und jede konkrete Instanz eines Syncables führt entsprechend dieser ein Update durch.\\
 Bei der Deserialisierung vollständiger Daten handelt es sich um die Übertragung der Existenz eines auf der empfangenden Maschine unbekannten Syncables, d.h.~die adressierte Syncable-Instanz existiert beim Erhalt der vollständigen Information noch nicht, weshalb für diesen Fall ein Konstruktionsmechanismus bereitgestellt wird, welcher aus den gelieferten Informationen ein konkretes Objekt erstellen kann.\\
 Um den erwünschten Typen des neuen Objekts zu ermitteln wird eine Typidentifikationsnummer für den Zweck der Objekterstellung mitübertragen.
-Der Empfänger kreiert weiter die erwünschten Objekte mittels eines Factory-Patterns.\\
+Der Empfänger kreiert die erwünschten Objekte mittels eines modifizierten Factory-Patterns.\\
 Im Rahmen des Projektes wurden also alle bestehenden Simulationsbestandteile, die übertragen werden müssen, zu Syncables. Für jedes davon wurden jeweils nur diejenigen Daten selektiert, die für die grafische Anzeige am Client relevant sind.\\
 
 Instanzen von Syncables werden zentral pro Maschine in einem sog.~Syncable-Manager, verwaltet. 
-Dieser wird initial mit seinem ersten Syncable bestückt: der Simulation selbst, welche das Interface ebenfalls implementiert. Die Simulation enthält die Simulationsinhalte als weitere Syncables. Es wird so implizit eine Baumstruktur erstellt. Der Syncable-Manager verwaltet sämtliche Syncables jedoch nicht in einer Baumstruktur, sonder in einem flachen Container.\\
+Dieser wird initial mit seinem ersten Syncable bestückt: der Simulation selbst, welche das Interface ebenfalls implementiert. Die Simulation enthält die Simulationsinhalte als weitere Syncables. Jedes Syncable könnte weitere Syncables enthalten. So liegt implizit eine Baumstruktur vor. Der Syncable-Manager verwaltet sämtliche Syncables jedoch davon unabhängig in einem separaten Container. Instanzen von Syncables sind darin über eine eindeutige Identifikationsnummer adressierbar. Diese wird vom Server festgelegt und bei der Eingliederung zugwiesen. Die Nummer kann weiter für alle anderen Zwecke verwendet werden, welche eine Spezifizierung eines Syncables benötigt werden, z.B.~Löschung.\\%TODO
 Eine Simulation bietet weiter dediziert Informationen in Form konsumierbarer Ereignisse über Objektneuerzeugungen oder -löschungen an, auf welche der Syncable-Manager, vor allem am Server, reagiert.\\
 Die Ereignisse liefern dabei zur Erzeugung beispielsweise die vollständige Information.\\
-Instanzen von Syncables werden am Syncable-Manager über eine eindeutige Identifikationsnummer unterschieden. Diese wird vom Server festgelegt und an Clients entsprechend im Rahmen der Objekterstellungsevents propagiert. Die Nummer kann weiter für alle anderen Zwecke verwendet werden, welche eine Spezifizierung eines Syncables benötigt werden, z.B.~Löschung.\\
 Die Ereignisse werden auf Grund der Kritikalität der Einhaltung ihrer Reihenfolge und der Anforderung der Übertragungsversicherung über TCP übertragen.\\
 Updates (Teilserialisierungen), die den Zustand eines bestehenden Syncables aktualisieren haben andere Anforderungen: Fehlende Updates sind unkritisch, da sie durch das nächste Update vollständig ersetzt werden. Veraltete Updates, die verspätet ankommen können auf Grund von nicht eingehaltenen Echtzeitanforderungen als nicht aktuell genug verworfen werden. Aus diesen Gründen ist hier UDP die beste Wahl.\\
 Bei Events ist die benutzte Bandbreite durch die Anzahl und Größe der Events festgelegt, da sie nicht weggelassen werden können. Bei Updates bedeutet ein fehlendes Paket jedoch nur eine etwas ungenauere Positionsextrapolation, die die Grafikkomponente erzeugt. Die Rate, mit der Updates versendet werden, kann also variabel gewählt werden. Da Netzwerkverbindungen immer eine Bandbreitenlimitierung aufweisen, sollte diese beachtet werden und als Grenze für die Rate der Updates dienen.\\
