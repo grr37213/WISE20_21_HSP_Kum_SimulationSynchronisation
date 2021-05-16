@@ -107,7 +107,7 @@ Der Empfänger kreiert die erwünschten Objekte mittels eines modifizierten Fact
 Im Rahmen des Projektes wurden also alle bestehenden Simulationsbestandteile, die übertragen werden müssen, zu Syncables. Für jedes davon wurden jeweils nur diejenigen Daten selektiert, die für die grafische Anzeige am Client relevant sind.\\
 
 Instanzen von Syncables werden zentral pro Maschine in einem sog.~Syncable-Manager, verwaltet. 
-Dieser wird initial mit seinem ersten Syncable bestückt: der Simulation selbst, welche das Interface ebenfalls implementiert. Die Simulation enthält die Simulationsinhalte als weitere Syncables. Jedes Syncable könnte weitere Syncables enthalten. So liegt implizit eine Baumstruktur vor. Der Syncable-Manager verwaltet sämtliche Syncables jedoch davon unabhängig in einem separaten Container. Instanzen von Syncables sind darin über eine eindeutige Identifikationsnummer adressierbar. Diese wird vom Server festgelegt und bei der Eingliederung zugwiesen. Die Nummer kann weiter für alle anderen Zwecke verwendet werden, welche eine Spezifizierung eines Syncables benötigt werden, z.B.~Löschung.\\%TODO
+Dieser wird initial mit seinem ersten Syncable bestückt: der Simulation selbst, welche das Interface ebenfalls implementiert. Die Simulation enthält die Simulationsinhalte als weitere Syncables. Jedes Syncable könnte weitere Syncables enthalten. So liegt implizit eine Baumstruktur vor. Der Syncable-Manager verwaltet sämtliche Syncables jedoch davon unabhängig in einem separaten Container. Instanzen von Syncables sind darin über eine eindeutige Identifikationsnummer adressierbar. Diese wird vom Server festgelegt und bei der Eingliederung zugwiesen. Die Nummer kann weiter für alle anderen Zwecke verwendet werden, welche eine Spezifizierung eines Syncables benötigt werden, z.B.~Löschung.\\%TODO diesen satz weiter
 Eine Simulation bietet weiter dediziert Informationen in Form konsumierbarer Ereignisse über Objektneuerzeugungen oder -löschungen an, auf welche der Syncable-Manager, vor allem am Server, reagiert.\\
 Die Ereignisse liefern dabei zur Erzeugung beispielsweise die vollständige Information.\\
 Die Ereignisse werden auf Grund der Kritikalität der Einhaltung ihrer Reihenfolge und der Anforderung der Übertragungsversicherung über TCP übertragen.\\
@@ -122,13 +122,13 @@ Die einzelnen Updates sind durch die eindeutige ID von Syncables am Client adres
 \subsection{Besonderheiten}
 Die Implementierung weist noch einige Besonderheiten auf:%TODO satz weglassen?
 \begin{itemize}
+
 \item Das Terrain wird nicht übertragen, da es mit einem plattformunabhängigen Zufallsgenerator mit festem Seed erzeugt wird und daher auf den verschiedenen Rechnern identische Resultate liefert. Terrain kann sich außerdem nicht verändern. Aus diesen Gründen kann der Client es einfach selbst bei Bedarf erzeugen (und wieder verwerfen, sobald sich der Spieler von einem Ort zu weit entfernt).
-\item Die Sichtrichtung einer Spielerfigur, und somit die grafisch angezeigte Perspektive am Client, wird aktuell noch vom Server bestimmt, ohne dass der Client für die Kamera im 3D-Raum eine eigene Schätzung verwendet. 
-Ein Spieler muss so beim Drehen seiner Sicht die Zwei-Wege-Latenz zum Server in Kauf nehmen. Zwar handelt der Server nach dem hier gezeigten Synchronisationsschema mit Gleichzeitigkeit, der Unterschied wird jedoch am Client grafisch merkbar, wenn sich die Perspektive schnell ändert während z.B.~geschossen wird. Projektile sind prinzipiell da wo sie sein sollen, das lokal angezeigte Fadenkreuz u.U.~allerdings nicht. Für einen Shooter ist die Flüssigkeit des Bildes  beim Zielen essentiell.
-Dies wäre somit die höchste Priorität für Erweiterungen des klassischen linearen Extrapolationsmodells der Grafik am Client, die lokal anliegenden Eingabeereignisse eigenständig mit einzubeziehen. Problematisch bei der Umsezung ist dort, dass der Server bestimmt, wann der Spieler seine Waffe abfeuert. Er bestimmt damit auch den Rückstoß, der die Blickrichtung ändert.
+
 \item Das Löschen von Syncables (auf Befehl des Servers) kann nicht abstrakt erfolgen, da innerhalb der Simulation durch die durch Komposition verursachte implizite Baumstruktur verschiedene Klassen von verschiedenen Komponenten verwaltet werden und die jeweils Korrekte über die Löschanfrage benachrichtigt werden muss. Über die in Abschnitt~\ref{sec:syncable} beschribene Typ-ID ist eine Differenzierung zur Laufzeit möglich.
-\item Geräusche, die alle als Reaktion auf ein Ereignis im Spiel auftreten (also vom Server angeordnet werden), wurden im Rahmen des Projekts nicht synchronisiert. Der Grund dafür ist, das aufgrund der Art und Weise, wie diese bisher implementiert sind und eine weitgehende Neuimplementierung des Features notwendig wäre, um auf dem Client zu funktionieren. Das wurde für den Rahmen des Projekts als zu Aufwändig eingeschätzt.
+
 \item Viele Bestandteile der Synchronisierungsimplementierung wurden so entwickelt, dass es prinzipiell möglich ist, den Status Server/Client/lokale Simulation zur Laufzeit zu wechseln. Dies ermöglicht es, weiterzuspielen, wenn der Server offline geht. Dieses Feature ist aktuell noch nicht vollständig entwickelt, aber geplant, sodass die aktuelle Implementierung keine Hürden dafür aufweist.
+
 \item In der im Projekt verwendeten Programmiersprache C++ bedeutet Besitz (Ownership) von Objekten normalerweise, das Recht und die Pflicht zu haben, diese zu löschen. Für die Synchronisierung über das Netzwerk ist dieses einfache Modell nicht ausreichend. Am Server besitzt die Simulation die in ihr enthaltenen Syncables. Prinzipiell erstreckt sich der Besitz allerdings über das Netzwerk hinweg zum Client. Während normalem Betrieb hat der Server das alleinige Recht, die Löschung von Objekten am Client zu beauftragen. Es gibt jedoch Fälle, wo der Client lokal die Kontrolle übernehmen muss:
 \begin{itemize}
 \item Beenden des Programms
@@ -136,7 +136,7 @@ Dies wäre somit die höchste Priorität für Erweiterungen des klassischen line
 \item Verbindung unterbrochen: Client muss sich neu verbinden oder beenden, was beides Löschung aller Objekte bedeutet.
 \item Zukünftig auch: Änderung des Status von Client zu lokaler Simulation oder zu Server. Die lokale Simulation hat dann alle Rechte an Syncables, der Syncable-Manager nimmt dann die Slave-Rolle ein.
 \end{itemize}
-\item Es fand keine signifikante Optimierung der genutzten Bandbreite statt. Das Design ist zunächst sehr allgemein gehalten, um möglichst viele Arten von Simulationsinhalten unkompliziert synchronieren zu können. 
+\item Es fand keine signifikante Optimierung der genutzten Bandbreite statt. Das Design ist zunächst sehr allgemein gehalten, um möglichst viele Arten von Simulationsinhalten unkompliziert synchronieren zu können. So könnte z.B: die Sichtrichtung eines Gegners auf 2\,Byte pro Achse beschränkt werden, ohne dass eine Abweichung im erzeugten Bild entstehen würde, die signifikant wäre.
 \end{itemize}
 
 
