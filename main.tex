@@ -97,15 +97,15 @@
 \input{introduction.tex}
 
 \section{Entwicklung der Softwarearchitektur einer synchronisierbaren Simulation}
-Durch die Übernahme des Status-Quo eines bestehenden Projektes bestehen zunächst Probleme im Design der Applikation, die eine Umsetzung einer Synchronisation verhindern. Es ist daher eine Überarbeitung der generellen Architektur der Applikation gefordert, welche im Projekt sukzessive nach Bedarf per Meilenstein abgearbeitet wird.\\
+Durch die Übernahme des Status-Quo eines bestehenden Projektes bestehen zunächst Probleme im Design der Applikation, die die Umsetzung einer Synchronisation verhindern. Es ist daher eine Überarbeitung der generellen Architektur der Applikation gefordert, welche im Projekt sukzessive nach Bedarf per Meilenstein abgearbeitet wird.\\
 Grundsätzlich wird angenommen, dass eine Echtzeitsynchronisation ständige Kommunikation zwischen beteiligten Knoten erfordert.
 Information über aktiv simulierte Simulationsinhalte sollen so oft wie möglich wiederholt versendet werden, um die auf dem Remote verfügbare Information so aktuell wie möglich zu halten. Dabei müssen Einschränkungen der Übertragungsmedien und -methoden respektiert werden.\\
-Die Last der Verarbeitung von Netzwerkkommunikation gegenüber der Last der aktiven lokalen Simulation von Inhalten wird als Vergleichsweise gering auf Grund der zur Verfügung stehenden Verbindung eingeschätzt. Relevante Parameter sind hier Latenz und Bandbreite.
+Die Last der Verarbeitung von Netzwerkkommunikation gegenüber der Last der aktiven lokalen Simulation von Inhalten wird als Vergleichsweise gering auf Grund der zur Verfügung stehenden Netzwerkverbindung eingeschätzt. Relevante Parameter sind hier Latenz und Bandbreite.
 
 \subsection{Übertragungsmethoden}
 \label{sec:transmission_formats}
 Perfekte Synchronität ist unter den Umständen von Latenz und der Möglichkeit der Einwirkung auf den Simulationszustand durch einen Bediener utopisch, da so unberechenbare Änderungen für den Simulationszustand existieren.
-Zur Entwicklung einer möglichst optimalen Übertragung werden verschiedene Aspekte in die Überlegung mit einbezogen, wie die folgenden Abschnitte zeigen.
+Zur Entwicklung einer möglichst optimalen Übertragung werden verschiedene Aspekte in die Überlegung mit einbezogen, wie die folgenden Abschnitte erläutern.
 
 \subsubsection{Übertragungszweck}
 Die Übertragung von Information im Rahmen der Synchronisation dient verschiedenen Teilzwecken.
@@ -118,7 +118,7 @@ Zu den Aufgaben hier zählen:
 \begin{itemize}
 \item Filterung von Fremdverbindungen durch eine Begrüßung spezifisch zur Applikation
 \item Identifikation von Servern und Clients (wir verzichten im Rahme dieser Arbeit auf Sicherheitsaspekte, wie z.B. saubere Authentifizierung, etc.)
-\item Die Übermittlung der Adressierung von UDP-Socket der jeweiligen Knoten.
+\item Die Übermittlung der Adressierung von UDP-Ports der jeweiligen Knoten.
 \end{itemize}
 \item Echtzeitinformation\\
 Information die sich ändert, insbesondere wenn die Änderung frequent ist.
@@ -131,7 +131,7 @@ Außerdem kann für bestimmte Zwecke berechenbarer oder statischer Determinismus
 Es stehen zwei Protokolle der ISO-OSI Transportschicht zur Verfügung:
 \begin{enumerate}
 \item TCP\\
-Relevante. Eigenschaften: Verbindungsorientiertheit, Erhaltung der Reihenfolge und Übertragungsversicherung als Abstraktion einer Stream-Datenstruktur.\\
+Relevante. Eigenschaften: Verbindungsorientiertheit, Erhaltung der Reihenfolge und Übertragungsversicherung.\\
 	Die Eigenschaften von TCP beinhalten für Echtzeitanwendungen jedoch gefährliche vorhersehbare Nachteile:\\
 	Bei spontanem Paketverlust fallen Wartezeiten durch Sendewiederholung an, welche weiteren Informationserhalt über den TCP-Socket blockiert.\\
 Ein Beispiel der unvorteilhaften Verwendung von TCP im Bereich von Videospielen ist das äußerst erfolgreiche und bekannte Spiel Minecraft von Mojang. Hier äußern sich Netzwerkverzögerungen (Lags) durch einen Stillstand der Spielabläufe, der sich über Sekunden ziehen kann und anschließendes Aufholen der Simulationszeit im Zeitraffer. Manch ein unverdientes Game Over kann daher von einem Gegner verursacht werden, der in der Zeit des Stillstandes Angriffe auf den Spieler im TCP-Puffer ansammelt, auf die der Spieler nicht reagieren kann. Dieser Umstand ist umso mehr Schade, wenn das verzögernde Paket zu dieser Zeit bereits schon, aufgrund von Echtzeitanforderungen, irrelevant ist, bzw. bereits ein aktuelleres im TCP-Puffer liegt.\\
@@ -151,15 +151,15 @@ Es werden prinzipiell zwei grundlegende Formate von temporärer Information für
 \item Statusinformation\\
 In der Simulation liegt die Information zu ihren Inhalten in Form von gezeiteten Stati vor, d.h. ein Zustand eines Simulationsinteresses zu einem bestimmten Zeitpunkt, sei dieser Real- oder Simulationszeit. \\
 So ist ein Projektil z.B.~durch Position und Geschwindigkeit zu einem Simulationszeitpunkt dargestellt, welche nach entsprechenden physikalischen Gesetzen aktualisiert werden kann.\\
-Die wohl interessanteste Eigenschaft von Statusinformation im Rahmen der Synchronisierung ist bei Mitführung des Zeitpunktes der Validität der Information die inhärente Redundanz bei wiederholter Übertragung durch simples überschreiben älterer Stati, welche die Übertragung sehr robust macht.
+Die wohl interessanteste Eigenschaft von Statusinformation im Rahmen der Synchronisierung ist, bei Mitführung des Zeitpunktes der Validität der Information, die inhärente Redundanz bei wiederholter Übertragung durch simples überschreiben älterer Stati, welche die Übertragung vor allem bei frequenter Wiederholung sehr robust macht.
 Das präferierte Transportprotokoll für diese Art Information ist UDP, da es dessen Eigenschaftsprofil entspricht.
-Wir erkennen jedoch auch, dass das Optimierungspotential von Synchronisationsprotokollen bei der Verwendung von roher Statusinformation beschränkt ist. Bei vielen Entitäten, oder bei komplexen Entitäten wird der benötigte Sendungsumfang unter Umständen zu groß.
+Es wird jedoch auch erkannt, dass das Optimierungspotential von Synchronisationsprotokollen bei der Verwendung von roher Statusinformation beschränkt ist. Bei vielen Entitäten, oder bei komplexen Entitäten wird der benötigte Sendungsumfang unter Umständen zu groß.
 Zum Beispiel werden beim Schießen einer Schrotflinte in der Simulation theoretisch zigfach Projektile frei, welche dann simuliert und synchronisiert werden sollen.
 Unter der Verwendung von Statusinformation zur Synchronisation dieser Projektile steigt die Menge der zur Synchronisation versendeten Daten mindestens linear mit der Anzahl der Projektile.\\
 Dieser Umstand kann nur durch eine abstraktere Behandlung von mehreren Projektilen in der Simulation, beispielsweise als Schwarm, abgeschwächt werden.
 \item Aktualisierungsinformation\\
 beschreibt die Änderung eines Zustands zu einem bestimmten Zeitpunkt. Diese umfassen meist codierte Anweisungen oder arithmetische Differenzen, welche auf den Status am Empfänger aufgerechnet werden.\\
-Ein Problem mit Änderungsinformation besteht, wenn diese keine kommutativen und\/oder assoziativen Eigenschaften beinhaltet und so sowohl die Übertragungsreihenfolge als auch die Übertragung selbst abgesichert sein muss, um die Äquivalenz des am Empfänger ermittelten Simulationsstatus sicherzustellen. In diesem Fall ist das präferierte Übertragungsprotokoll TCP, da dieses die so geforderten Eigenschaften mitbringt. Ist die Reihenfolge oder das Fehlen der Information am Empfänger allerdings nicht kritisch kann auch hierfür einfach UDP verwendet werden. Es ist jedoch hier essentiell eine Analyse zu vollziehen, da sonst zu synchronisierende Simulationsstati sich plötzlich und oft sogar unerkannt desynchronisieren können.
+Ein Problem mit Änderungsinformation besteht, wenn diese keine redundanten, kommutativen und\/oder assoziativen Eigenschaften beinhaltet und so sowohl die Übertragungsreihenfolge als auch die Übertragung selbst abgesichert sein muss, um die Äquivalenz des am Empfänger ermittelten Simulationsstatus sicherzustellen. In diesem Fall ist das präferierte Übertragungsprotokoll TCP, da dieses die so geforderten Eigenschaften mitbringt. Ist die Reihenfolge oder das Fehlen der Information am Empfänger allerdings nicht kritisch kann auch hierfür einfach UDP verwendet werden. Es ist jedoch hier essentiell eine Analyse zu vollziehen, da sonst zu synchronisierende Simulationsstati sich plötzlich und oft sogar unerkannt desynchronisieren können.
 
 \end{enumerate}
 
@@ -199,7 +199,7 @@ Eine spezielle Entität, welche als Avatar für den Benutzer in der simulierten 
 \item OS-Zugang\\
 Enthält Zugriff und Schnittstellen zu Ressourcen des Betriebssystems, dem Fenster, Ereignisquellen, Lautsprecher, etc.
 \item Ereignisverarbeitung\\
-Über Bibliotheken werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und zum Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse (eng. events) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
+Über Bibliotheken wie SMFL \cite{sfml} werden Betriebssystemressourcen angefordert, wie z.B. ein Fenster. Ein Fenster ist in der Lage, Eingaben von Eingabegeräten (Tastatur, Maus, etc.) und zum Fenster bezogene Information (Größenänderung, Status des Fokus, etc.) in Form sog.~Ereignisse (eng. events) zu liefern. Verhalten des Fensters sind größtenteils von den verwendeten Bibliotheken gekapselt, jedoch erfordern bestimmte Aspekte eine Reaktion weiterer Komponenten (z.B. beim Schließen des Fensters sollen Ressourcen freigegeben werden, Simulation geschlossen werden, etc.).
 Weiter sollen natürlich Eingaben für die Verwendung als Steuerung der Simulation verwendet werden. Die Ereignisverarbeitung beschreibt dabei ein System, welches die Eingaben in einen von der Simulation, bzw.~von Benutzerentitäten interpretierbaren Status umwandelt.
 \item 3D-Renderer der Simulation\\
 Die Aufgabe des Renderers ist es, ein Bild des simulierten Raums aus einer bestimmte Perspektive zu erstellen und auf ein Fenster des Betriebssystems zu übertragen.
@@ -259,13 +259,13 @@ Die Existenz dieser konkretisierten Abstraktionen erlauben weiter die Umsetzung 
 \item Verlagerung eines Benutzers hinter eine Netzwerkverbindung\\
 	Durch die Abstraktion eines Benutzers kann dieser für den Kontext einer Lokalen oder Remoteverbindung abstrahiert werden.
 \item Behandlung mehrerer Benutzer, mehrerer Eingaben\\
-	Vor allem die isolierte Abstraktion der Simulation kann nun auf die Fähigkeit zur Behandlung meherer Benutzer erweitert werden.
+	Vor allem die isolierte Abstraktion der Simulation kann nun auf die Fähigkeit zur Behandlung mehrerer Benutzer erweitert werden.
 \item Optionalität einer grafischen Ausgabe\\
-	Durch die Trennung der Perspektive von der Spielerfigur kann nun entschieden werden, ob ein 3D-Renderer überhaupt initialisiert wird. Das ist vor allem für die Anforderung mehrerer Benutzer von Interesse, weil so theoretisch beliebig viele Perspektiven der existierenden Spielerfiguren gerendert werden können. Die Grafik ist dadurch nicht nur flexibler, es macht auch die Implementierung eines dedizierten Servers (ohne lokalen Benutzer) möglich.
+	Durch die Trennung der Perspektive von der Spielerfigur kann nun entschieden werden, ob ein 3D-Renderer überhaupt initialisiert wird. Die Grafik ist dadurch nicht nur flexibler, es macht auch die Implementierung eines dedizierten Servers (ohne lokalen Benutzer) möglich.
 \item Unterschiedliche grafische Ausgabeperspektiven\\
-	Es ist möglich einer grafischen Ausgabe unterschiedliche Perspektiven zur Anzeige zuzuweisen. Vorausgesetzt mehrere aktive Simulationsinhalte sind dazu fähig eine Perspektive zu spezifizieren (derzeitig nur eine Art von Spielerfigur)
+	Es ist möglich einer grafischen Ausgabe unterschiedliche Perspektiven zur Anzeige zuzuweisen. Vorausgesetzt mehrere aktive Simulationsinhalte sind dazu fähig eine Perspektive zu spezifizieren (derzeitig nur ein Typ von Spielerfigur vorhanden)
 \item Kontrolle von schreibendem Zugriff eines auf Simulationsinhalte (für Clients)\\
-Die Unterscheidung der Simulation und der Simulationsinhalte/Entitäten ermöglicht die Übertragung der Simulationsinhalte außerhalb des konkreten Kontextes der aktiven Simulation. So müssen Simulationsinhalte nicht von ausschließlich der Simulation aktualisiert werden, sondern dies kann z.B. über eine Netzwerkverbindung geschehen.
+Die Unterscheidung der Simulation und der Simulationsinhalte/Entitäten ermöglicht die Übertragung der Simulationsinhalte außerhalb des konkreten Kontextes der aktiven Simulation. So müssen Simulationsinhalte nicht von ausschließlich der Simulation durch Ticks aktualisiert werden, sondern dies kann z.B. über eine Netzwerkverbindung geschehen.
 \item Stabiler Applikationsstart unabhängig zu einer Simulation (Öffnen des Fensters, Mausverhalten)\\
 Durch die Abgrenzung von Belangen, vor allem hinsichtlich geladener Ressourcen, wie Texturen, Eingabeparameter oder Konfigurationsdateien, werden benutzer- oder kontextdefinierte Einstellungen der Applikation möglich. So können verschiedene Applikationskontexte mit weniger unnötigem Ressourcenoverhead realisiert werden, z.B.~als Client, als Server, nur Lokal, Fernsteuerung, etc.. Die fehlende Behandlung dieses Overheads bei der Überarbeitung einzelner Features im Rahmen dieses Projektes stellt eine Erleichterung dar.
 \end{itemize}
@@ -276,7 +276,6 @@ Wie diese nun ermöglichten Features im Weiteren zur Umsetzung der Projektziele 
 
 \input{sync.tex}
 
-\section{Zusammenfassung}
 \input{summary.tex}
 
 \newpage
