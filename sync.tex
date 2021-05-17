@@ -9,6 +9,7 @@ Dem Client ist es unter Master-Slave-Architektur nicht erlaubt, irgendwelche Sim
 Es scheint praktisch, die in der Fernsteuerung umgesetzten Eingabemethoden wiederzuverwenden. Die Methode ist bereits optimiert in Aspekten der Bandbreite, die zu übertragene Information ist bereits auf essentielle Use-Cases für die Steuerung einer Figur reduziert. Die Semantik des Kontrollstatus als Bedienerintention scheint richtig: Der Client hat als Slave keine kontrollierenden Rechte gegenüber Inhalte der Simulation und kann über den Kontrollstatus nur Vorschläge liefern, welche die Simulation auf dem Server zu ihrer Diskretion interpretieren kann.
 
 \subsection{Zeitsynchronisation}
+\label{sec:clock}
 
 Ein Ziel der Synchronisation der Simulation auf verschiedenen Rechenmaschinen ist die Illusion von Gleichzeitigkeit, trotz der von der Latenz verursachter Seiteneffekte, zu erzeugen.
 Bei Synchronisationsvorgängen von gezeiteten Simulationsinhalten ist eine gemeinsame Zeitbasis sinnvoll.
@@ -107,15 +108,15 @@ Der Empfänger kreiert die erwünschten Objekte mittels eines modifizierten Fact
 Im Rahmen des Projektes wurden also alle bestehenden Simulationsbestandteile, die übertragen werden müssen, zu Syncables. Für jedes davon wurden jeweils nur diejenigen Daten selektiert, die für die grafische Anzeige am Client relevant sind.\\
 
 Instanzen von Syncables werden zentral pro Maschine in einem sog.~Syncable-Manager, verwaltet. 
-Dieser wird initial mit seinem ersten Syncable bestückt: der Simulation selbst, welche das Interface ebenfalls implementiert. Die Simulation enthält die Simulationsinhalte als weitere Syncables. Jedes Syncable könnte weitere Syncables enthalten. So liegt implizit eine Baumstruktur vor. Der Syncable-Manager verwaltet sämtliche Syncables jedoch davon unabhängig in einem separaten Container. Instanzen von Syncables sind darin über eine eindeutige Identifikationsnummer adressierbar. Diese wird vom Server festgelegt und bei der Eingliederung zugwiesen. Die Nummer kann weiter für alle anderen Zwecke verwendet werden, welche eine Spezifizierung eines Syncables benötigt werden, z.B.~Löschung.\\%TODO diesen satz weiter
-Eine Simulation bietet weiter dediziert Informationen in Form konsumierbarer Ereignisse über Objektneuerzeugungen oder -löschungen an, auf welche der Syncable-Manager, vor allem am Server, reagiert.\\
+Dieser wird initial mit seinem ersten Syncable bestückt: der Simulation selbst, welche das Interface ebenfalls implementiert. Die Simulation enthält die Simulationsinhalte als weitere Syncables. Jedes Syncable könnte weitere Syncables enthalten. So liegt implizit eine Baumstruktur vor. Der Syncable-Manager verwaltet sämtliche Syncables jedoch davon unabhängig in einem separaten Container. Instanzen von Syncables sind darin über eine eindeutige Identifikationsnummer adressierbar. Diese wird vom Server festgelegt und bei der Eingliederung zugwiesen. Sie gilt nicht nur lokal, sondern auch auf verbundenen Clients. Deshalb kann diese ID für Zwecke verwendet werden, wo ein einzelnes Syncable nicht-lokal referenziert werden muss, z.B.~Löschbefehle.\\%TODO diesen satz weiter
+Eine Simulation bietet dediziert Informationen in Form konsumierbarer Ereignisse über Objektneuerzeugungen oder -löschungen an, auf welche der Syncable-Manager, vor allem am Server, reagiert.\\
 Die Ereignisse liefern dabei zur Erzeugung beispielsweise die vollständige Information.\\
 Die Ereignisse werden auf Grund der Kritikalität der Einhaltung ihrer Reihenfolge und der Anforderung der Übertragungsversicherung über TCP übertragen.\\
-Updates (Teilserialisierungen), die den Zustand eines bestehenden Syncables aktualisieren haben andere Anforderungen: Fehlende Updates sind unkritisch, da sie durch das nächste Update vollständig ersetzt werden. Veraltete Updates, die verspätet ankommen können auf Grund von nicht eingehaltenen Echtzeitanforderungen als nicht aktuell genug verworfen werden. Aus diesen Gründen ist hier UDP die beste Wahl.\\
+Updates (Teilserialisierungen), die den Zustand eines bestehenden Syncables aktualisieren haben andere Anforderungen: Fehlende Updates sind unkritisch, da sie durch das nächste Update vollständig ersetzt werden. Veraltete Updates, die verspätet ankommen können als nicht aktuell genug verworfen werden. Aus diesen Gründen ist hier UDP die beste Wahl.\\
 Bei Events ist die benutzte Bandbreite durch die Anzahl und Größe der Events festgelegt, da sie nicht weggelassen werden können. Bei Updates bedeutet ein fehlendes Paket jedoch nur eine etwas ungenauere Positionsextrapolation, die die Grafikkomponente erzeugt. Die Rate, mit der Updates versendet werden, kann also variabel gewählt werden. Da Netzwerkverbindungen immer eine Bandbreitenlimitierung aufweisen, sollte diese beachtet werden und als Grenze für die Rate der Updates dienen.\\
 Die Verfügbare Anzahl an Bytes entsprechend einer eingestellten maximalen Bandbreite stellt die Netzwerkkomponente zu jeder Zeit zur Verfügung.
 Der Syncable-Manager ist so konzipiert, dass er beim Füllen von Paketen ein Maximum verfügbarer Bytes berücksichtigt.
-Bei Update-Paketen werden solange Updates von einzelnen Syncables eingefügt, bis die Maximalgröße ein weiteres Einfügen verhindert. Die Syncables, die im aktuellen Paket enthalten sind, werden nach dem Round-Robin-Verfahren ausgewählt (maximal 1~Runde pro Update-Paket).\\
+Bei Update-Paketen werden solange Updates von einzelnen Syncables eingefügt, bis die Maximalgröße ein weiteres Einfügen verhindert. Die Syncables, die im aktuellen Paket enthalten sind, werden nach dem Round-Robin-Verfahren ausgewählt (maximal 1~Runde pro Sendezyklus).\\
 Die einzelnen Updates sind durch die eindeutige ID von Syncables am Client adressiert.
 
 
@@ -136,7 +137,12 @@ Die Implementierung weist noch einige Besonderheiten auf:%TODO satz weglassen?
 \item Verbindung unterbrochen: Client muss sich neu verbinden oder beenden, was beides Löschung aller Objekte bedeutet.
 \item Zukünftig auch: Änderung des Status von Client zu lokaler Simulation oder zu Server. Die lokale Simulation hat dann alle Rechte an Syncables, der Syncable-Manager nimmt dann die Slave-Rolle ein.
 \end{itemize}
+
 \item Es fand keine signifikante Optimierung der genutzten Bandbreite statt. Das Design ist zunächst sehr allgemein gehalten, um möglichst viele Arten von Simulationsinhalten unkompliziert synchronieren zu können. So könnte z.B: die Sichtrichtung eines Gegners auf 2\,Byte pro Achse beschränkt werden, ohne dass eine Abweichung im erzeugten Bild entstehen würde, die signifikant wäre.
+
+\item Durch das Round-Robin Verfahren und das Versenden des aktuellsten bekannten Zustands als Update, können die Informationen verschiedener Syncables verschieden alt sein. Ein Sncable, das frisch Updates erhalten hat muss also weniger weit von der Grafik in die Zukunft extrapoliert werden als ein anderes, das erst das nächste mal an der Reihe wäre. Durch die unabhängige Natur der reinen lineraren Extrapolation ist das kein Problem und wird auch vom Benutzer nur in seltensten Fällen bemerkt.
+
+\item Die Relation der Simulationszeit am Client zu der am Server wird vom Server bestimmt. Tritt beim in Abschnitt~\ref{sec:clock} beschriebenen Verfahren ein plötzlicher Anstieg der Latenz vom Client zum Server auf, wäre nach Zeitrechnugn des Client das Paket am Server zu spät für eine Verarbeitung in der Gegenwart angekommen. Der Server definiert die Zeitrelation jedoch in diesem Moment so um, dass das Paket in der Gegenwart verarbeitet werden kann. Die daraus resultierenden Seiteneffekte hat also allein der Client zu tragen.%TODO noch irgendwo oben reinquetschen?
 \end{itemize}
 
 
