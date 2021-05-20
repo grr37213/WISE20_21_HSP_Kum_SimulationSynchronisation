@@ -37,7 +37,7 @@ Auf Basis der Uhr definieren wir zwei relevante zeitliche Sequenzen:
 \begin{align}
 	\mathcal{T}:T_r \twoheadrightarrow T_s
 \end{align}
-	\item Um die Kontinuität der Zeit herzustellen wird weiter eine flexible Zeitrate $r_t$ in Abhängigkeit zur Realzeit definiert, welche das relative Verstreichen der Zeit in der Simulation steuert. 
+	\item Um eine Beziehung zur Realzeit herzustellen \cite[p.3]{Suri00} und, um die Kontinuität der Simulationszeit herzustellen wird weiter eine flexible Zeitrate $r_t$ in Abhängigkeit zur Realzeit definiert, welche das relative Verstreichen der Zeit in der Simulation steuert.
 \begin{align}
 r_t:T_r\mapsto\mathcal{F}\\
  \forall t_{r0},  t_{r1} \in T_r ; t_{diff}=t_{r1}-t_{r0} :\mathcal{T}(t_{r1}) = \mathcal{T}(t_{r0}) + t_{diff}\cdot r_t(t_{r1})

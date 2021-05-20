@@ -29,7 +29,7 @@
 \usepackage{tikz}
 \usepackage{background}
 %uncomment next line to remove "Draft" watermark
-%\backgroundsetup{contents={}}
+\backgroundsetup{contents={}}
 
 
 % Trennvorschl"age (in {} einfuegen, wenn nicht automatisch getrennt wird:
@@ -128,14 +128,14 @@ Dies sind meist die Stati von Simulationsinhalten.
 Außerdem kann für bestimmte Zwecke berechenbarer oder statischer Determinismus eingesetzt werden, um eine Übertragung komplett zu vermeiden.
 
 \subsubsection{Transportschicht}
-Es stehen zwei Protokolle der ISO-OSI Transportschicht zur Verfügung:
+Es stehen zwei Protokolle der ISO-OSI Transportschicht zur Verfügung \cite[ch.4]{gamenetworking00}:
 \begin{enumerate}
 \item TCP\\
 Relevante. Eigenschaften: Verbindungsorientiertheit, Erhaltung der Reihenfolge und Übertragungsversicherung.\\
 	Die Eigenschaften von TCP beinhalten für Echtzeitanwendungen jedoch gefährliche vorhersehbare Nachteile:\\
-	Bei spontanem Paketverlust fallen Wartezeiten durch Sendewiederholung an, welche weiteren Informationserhalt über den TCP-Socket blockiert.\\
-Ein Beispiel der unvorteilhaften Verwendung von TCP im Bereich von Videospielen ist das äußerst erfolgreiche und bekannte Spiel Minecraft von Mojang. Hier äußern sich Netzwerkverzögerungen (Lags) durch einen Stillstand der Spielabläufe, der sich über Sekunden ziehen kann und anschließendes Aufholen der Simulationszeit im Zeitraffer. Manch ein unverdientes Game Over kann daher von einem Gegner verursacht werden, der in der Zeit des Stillstandes Angriffe auf den Spieler im TCP-Puffer ansammelt, auf die der Spieler nicht reagieren kann. Dieser Umstand ist umso mehr Schade, wenn das verzögernde Paket zu dieser Zeit bereits schon, aufgrund von Echtzeitanforderungen, irrelevant ist, bzw. bereits ein aktuelleres im TCP-Puffer liegt.\\
-Die Verwendung von TCP für echtzeitrelevante Information ist daher nur ratsam, wenn die zu übertragende Information die von TCP erhaltenen Eigenschaften von Reihenfolge und Übertragungssicherheit auch tatsächlich fordert. In diesem Fall muss ein Protokoll, welches diese Eigenschaften implementiert nicht im Rahmen von UDP selbst umgesetzt werden.\\
+	Bei spontanem Paketverlust fallen Wartezeiten durch Sendewiederholung an, welche weiteren Informationserhalt über den TCP-Socket blockiert \cite[p.45]{gamenetworking00}.\\
+Ein Beispiel der unvorteilhaften Verwendung von TCP im Bereich von Videospielen ist daher das äußerst erfolgreiche und bekannte Spiel Minecraft von Mojang. Hier äußern sich Netzwerkverzögerungen (Lags) durch einen Stillstand der Spielabläufe, der sich über Sekunden ziehen kann und anschließendes Aufholen der Simulationszeit im Zeitraffer. Manch ein unverdientes Game Over kann daher von einem Gegner verursacht werden, der in der Zeit des Stillstandes Angriffe auf den Spieler im TCP-Puffer ansammelt, auf die der Spieler nicht reagieren kann. Dieser Umstand ist umso mehr Schade, wenn das verzögernde Paket zu dieser Zeit bereits schon, aufgrund von Echtzeitanforderungen, irrelevant ist, bzw. bereits ein aktuelleres im TCP-Puffer liegt.\\
+Die Verwendung von TCP für echtzeitrelevante Information ist daher nur ratsam, wenn die zu übertragende Information die von TCP erhaltenen Eigenschaften von Reihenfolge und Übertragungssicherheit auch tatsächlich fordert. In diesem Fall muss ein Protokoll, welches diese Eigenschaften implementiert nicht im Rahmen von UDP selbst umgesetzt werden. Es lohnt sich allerdings auch nur über UDP, eine Übertragungssicherung mittels Redundanz zu gewährleisten.\\
 Durch seine Verbindungsorientiertheit bietet sich TCP ebenfalls für die Verbindungskontrolle an, da der Verbindungsstatus, z.B.~ bei abgebrochenen Verbindungen leicht erkannt werden kann. Des weiteren lassen sich auf der Basis einer TCP-Verbindung leicht eigene sequenzielle Protokolle implementieren, z.B. um eine Verbindung zweier Applikationen in der Applikationsschicht initial herzustellen.
 \item UDP\\
 Relevante Eigenschaften: maximale Größe von Einzelpaketen, sonst keine relevanten Anforderungen.\\

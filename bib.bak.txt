@@ -1,0 +1,36 @@
+@online{skyrim-physics-cap-and-fix,
+  title = {PCGamingWiki Eintrag zu The Elder Scrolls V: Skyrim Special Edition by Bethesda},
+  url = {https://www.pcgamingwiki.com/wiki/The_Elder_Scrolls_V:_Skyrim_Special_Edition#Frame_rate_.28FPS.29},
+  urldate = {2021-05-09},
+  note = {Beinhält bugfixes, Link führt zu konkretem Fix der FPS Begrenzung des Spiels}
+}
+
+@online{dark_souls-physics-cap-and-fix,
+  title = {PCGamingWiki Eintrag zu Dark Souls by FromSoftware},
+  url = {https://www.pcgamingwiki.com/wiki/Dark_Souls:_Prepare_to_Die_Edition#High_frame_rate},
+  urldate = {2021-05-09},
+  note = {Beinhält bugfixes, Link führt zu konkretem Fix der FPS Begrenzung des Spiels}
+}
+
+@online{flying-fucking-mammoths,
+  title = {Skyrim Flying Mammoth Glitch},
+  url = {https://www.youtube.com/watch?v=7o4ldTN2PFE},
+  urldate = {2021-05-09},
+  note = {Youtube-Video}
+}
+
+@online{morecinematic00,
+  title = {Ubisoft on Assassin's Creed Unity: 30fps "Feels More Cinematic"},
+  author = {Joey Davidson},
+  date = {2014-10-09},
+  url = {https://www.technobuffalo.com/assassins-creed-unity-framerate-30fps-more-cinematic},
+  urldate = {2021-05-09}
+}
+
+@online{morecinematic01,
+  title = {30 FPS “feels more cinematic,” says Assassin’s Creed Unity dev},
+  author = {Sherif Saed},
+  date = {2014-10-09},
+  url = {https://www.vg247.com/2014/10/09/30-was-our-goal-it-feels-more-cinematic-says-assassins-creed-unity-dev/},
+  urldate = {2021-05-09}
+}
